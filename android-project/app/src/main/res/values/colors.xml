@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主题色 -->
+    <color name="primary">#1677FF</color>
+    <color name="primary_dark">#0958D9</color>
+    <color name="primary_light">#69B1FF</color>
+    
+    <!-- 辅助色 -->
+    <color name="secondary">#52C41A</color>
+    <color name="warning">#FAAD14</color>
+    <color name="error">#F5222D</color>
+    <color name="info">#13C2C2</color>
+    
+    <!-- 背景色 -->
+    <color name="background">#FFFFFF</color>
+    <color name="background_secondary">#F5F5F5</color>
+    <color name="background_card">#FAFAFA</color>
+    
+    <!-- 文字色 -->
+    <color name="text_primary">#262626</color>
+    <color name="text_secondary">#595959</color>
+    <color name="text_disabled">#BFBFBF</color>
+    <color name="text_hint">#BFBFBF</color>
+    
+    <!-- 分割线 -->
+    <color name="divider">#E8E8E8</color>
+    
+    <!-- 专业标签背景 -->
+    <color name="tag_blue">#1677FF</color>
+    <color name="tag_blue_light">#E6F4FF</color>
+    <color name="tag_green">#52C41A</color>
+    <color name="tag_orange">#FAAD14</color>
+</resources>

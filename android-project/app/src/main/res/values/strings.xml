@@ -1,0 +1,55 @@
+<resources>
+    <string name="app_name">儿童产品设计助手</string>
+    
+    <!-- 应用标题 -->
+    <string name="title_standard_select">标准适配设计</string>
+    <string name="title_design_result">设计方案结果</string>
+    
+    <!-- 通用 -->
+    <string name="btn_generate">生成设计方案</string>
+    <string name="btn_back">返回</string>
+    <string name="btn_cancel">取消</string>
+    <string name="btn_save">保存</string>
+    
+    <!-- 输入提示 -->
+    <string name="hint_child_height">儿童身高（cm）</string>
+    <string name="hint_child_weight">儿童体重（kg）</string>
+    <string name="hint_select_product">请选择产品类型</string>
+    <string name="hint_select_standard">请选择至少一个标准</string>
+    
+    <!-- 错误提示 -->
+    <string name="error_invalid_height">请输入有效的身高（1-150cm）</string>
+    <string name="error_invalid_weight">请输入有效的体重（1-50kg）</string>
+    <string name="error_no_product">请选择产品类型</string>
+    <string name="error_no_standard">请选择至少一个标准</string>
+    <string name="error_generate_failed">生成失败，请重试</string>
+    <string name="error_no_data">未找到匹配的设计数据</string>
+    
+    <!-- 加载状态 -->
+    <string name="loading_generating">正在生成设计方案…</string>
+    <string name="loading_loading">加载中…</string>
+    
+    <!-- 结果展示 -->
+    <string name="label_applicable_standard">适用标准</string>
+    <string name="label_basic_data">基础适配数据</string>
+    <string name="label_design_params">设计参数</string>
+    <string name="label_test_requirements">测试要求</string>
+    <string name="label_test_items">标准测试项</string>
+    <string name="label_compatible_tip">多标准兼容建议</string>
+    
+    <!-- 产品分类 -->
+    <string name="category_travel">出行类</string>
+    <string name="category_home">家居类</string>
+    
+    <!-- 产品名称 -->
+    <string name="product_child_seat">儿童安全座椅</string>
+    <string name="product_baby_stroller">婴儿推车</string>
+    <string name="product_high_chair">儿童高脚椅</string>
+    <string name="product_child_bed">儿童床</string>
+    
+    <!-- 选择操作 -->
+    <string name="action_select_all">全选</string>
+    <string name="action_deselect_all">取消全选</string>
+    <string name="action_collapse">收起</string>
+    <string name="action_expand">展开</string>
+</resources>
