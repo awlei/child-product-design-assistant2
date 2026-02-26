@@ -21,9 +21,7 @@
     </style>
 
     <!-- Splash screen theme -->
-    <style name="Theme.DesignAssistant.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/primary</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
-        <item name="postSplashScreenTheme">@style/Theme.DesignAssistant</item>
+    <style name="Theme.DesignAssistant.Splash" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/primary</item>
     </style>
 </resources>
