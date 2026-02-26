@@ -66,7 +66,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.4"
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 
     packaging {
@@ -90,7 +90,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
 
     // Compose Compiler - 明确指定版本
-    debugImplementation("androidx.compose.compiler:compiler:1.5.4")
+    debugImplementation("androidx.compose.compiler:compiler:1.5.14")
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.5")
