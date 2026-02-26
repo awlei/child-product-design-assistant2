@@ -12,7 +12,7 @@ import com.design.assistant.database.gps028.entity.Gps028DesignParamEntity
 @Database(
     entities = [Gps028DesignParamEntity::class],
     version = 1,
-    exportSchema = true
+    exportSchema = false
 )
 abstract class Gps028Database : RoomDatabase() {
     abstract fun gps028DesignDao(): Gps028DesignDao

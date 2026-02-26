@@ -13,7 +13,7 @@ import com.design.assistant.database.travel.childseat.eu.entity.EceR129TestConfi
 @Database(
     entities = [EceR129DummyEntity::class, EceR129TestConfigEntity::class],
     version = 1,
-    exportSchema = true
+    exportSchema = false
 )
 abstract class EceR129Database : RoomDatabase() {
     abstract fun eceR129DummyDao(): EceR129DummyDao
