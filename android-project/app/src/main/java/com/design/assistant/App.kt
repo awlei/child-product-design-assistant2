@@ -7,7 +7,8 @@ import com.design.assistant.database.travel.childseat.aus.AsNzs1754Database
 import com.design.assistant.database.travel.childseat.canada.Cmvss213Database
 import com.design.assistant.database.travel.childseat.eu.EceR129Database
 import com.design.assistant.database.travel.childseat.us.Fmvss213Database
-import com.design.assistant.repository.MultiStandardDesignRepository
+// TODO: 待实现多标准整合功能
+// import com.design.assistant.repository.MultiStandardDesignRepository
 import com.design.assistant.repository.gps028.Gps028Repository
 import com.design.assistant.repository.travel.ChildSeatRepository
 import com.design.assistant.viewmodel.DesignGenerateVM
@@ -32,7 +33,8 @@ class DesignAssistantApp : Application() {
     // Repository实例（专业版）
     lateinit var gps028Repo: Gps028Repository
     lateinit var childSeatRepo: ChildSeatRepository
-    lateinit var multiStandardRepo: MultiStandardDesignRepository
+    // TODO: 待实现多标准整合功能
+    // lateinit var multiStandardRepo: MultiStandardDesignRepository
 
     // VM实例（专业版）
     lateinit var productSelectVM: ProductStandardSelectVM
@@ -81,12 +83,13 @@ class DesignAssistantApp : Application() {
             cmvss213Db = cmvss213Db,
             gps028Repo = gps028Repo
         )
-        multiStandardRepo = MultiStandardDesignRepository(
-            childSeatRepo = childSeatRepo,
-            babyStrollerRepo = /* 婴儿推车专业版仓库 */,
-            highChairRepo = /* 高脚椅专业版仓库 */,
-            childBedRepo = /* 儿童床专业版仓库 */
-        )
+        // TODO: 待实现多标准整合功能
+        // multiStandardRepo = MultiStandardDesignRepository(
+        //     childSeatRepo = childSeatRepo,
+        //     babyStrollerRepo = /* 婴儿推车专业版仓库 */,
+        //     highChairRepo = /* 高脚椅专业版仓库 */,
+        //     childBedRepo = /* 儿童床专业版仓库 */
+        // )
     }
 
     /** 初始化所有VM（专业版） */
