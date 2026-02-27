@@ -39,8 +39,14 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android-project/release-keystore.jks
 
+      - name: Clean build cache
+        run: cd android-project && ./gradlew clean --no-daemon
+
+      - name: Stop Gradle daemon
+        run: cd android-project && ./gradlew --stop
+
       - name: Build Debug APK
-        run: cd android-project && ./gradlew assembleDebug --stacktrace
+        run: cd android-project && ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Build Release APK
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
