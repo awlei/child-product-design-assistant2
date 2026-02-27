@@ -4,6 +4,17 @@ plugins {
     id("com.google.devtools.ksp") version "1.9.10-1.0.15"
 }
 
+// Explicitly set Kotlin version in buildscript to force the compiler version
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.10")
+    }
+}
+
 // Force Kotlin version across all dependencies
 configurations.all {
     resolutionStrategy {
@@ -11,6 +22,8 @@ configurations.all {
         force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10")
         force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10")
         force("org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10")
+        force("org.jetbrains.kotlin:kotlin-reflect:1.9.10")
+        force("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.10")
     }
 }
 
