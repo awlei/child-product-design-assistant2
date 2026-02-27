@@ -42,6 +42,9 @@ jobs:
       - name: Clean build cache
         run: cd android-project && ./gradlew clean --no-daemon
 
+      - name: Remove configuration cache
+        run: cd android-project && rm -rf .gradle/configuration-cache .configuration-cache app/.gradle
+
       - name: Stop Gradle daemon
         run: cd android-project && ./gradlew --stop
 
