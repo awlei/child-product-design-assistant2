@@ -4,6 +4,16 @@ plugins {
     id("com.google.devtools.ksp") version "1.9.10-1.0.15"
 }
 
+// Force Kotlin version across all dependencies
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlin:kotlin-stdlib:1.9.10")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10")
+        force("org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10")
+    }
+}
+
 android {
     namespace = "com.design.assistant"
     compileSdk = 34
