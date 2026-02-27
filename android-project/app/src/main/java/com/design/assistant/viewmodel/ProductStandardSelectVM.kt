@@ -17,7 +17,7 @@ class ProductStandardSelectVM : ViewModel() {
     val selectedProductType: StateFlow<ProductType> = _selectedProductType.asStateFlow()
 
     // 选中的标准体系
-    private val _selectedStandard = MutableStateFlow<String>(StandardConstants.STANDARD_ECE_R129)
+    private val _selectedStandard = MutableStateFlow<String>(StandardConstants.ECE_R129)
     val selectedStandard: StateFlow<String> = _selectedStandard.asStateFlow()
 
     /**
@@ -27,10 +27,10 @@ class ProductStandardSelectVM : ViewModel() {
         _selectedProductType.value = productType
         // 切换产品类型时，默认选中该产品的第一个标准
         when (productType) {
-            ProductType.CHILD_SEAT -> _selectedStandard.value = StandardConstants.STANDARD_ECE_R129
-            ProductType.BABY_STROLLER -> _selectedStandard.value = StandardConstants.STANDARD_GB_27887
-            ProductType.HIGH_CHAIR -> _selectedStandard.value = StandardConstants.STANDARD_AS_NZS_1754
-            ProductType.CHILD_BED -> _selectedStandard.value = StandardConstants.STANDARD_FMVSS_213
+            ProductType.CHILD_SEAT -> _selectedStandard.value = StandardConstants.ECE_R129
+            ProductType.BABY_STROLLER -> _selectedStandard.value = StandardConstants.GB_14748
+            ProductType.HIGH_CHAIR -> _selectedStandard.value = StandardConstants.EN_14988
+            ProductType.CHILD_BED -> _selectedStandard.value = StandardConstants.EN_716
         }
     }
 
@@ -47,19 +47,26 @@ class ProductStandardSelectVM : ViewModel() {
     fun getSupportedStandards(): List<String> {
         return when (_selectedProductType.value) {
             ProductType.CHILD_SEAT -> listOf(
-                StandardConstants.STANDARD_ECE_R129,
-                StandardConstants.STANDARD_CMVSS_213,
-                StandardConstants.STANDARD_FMVSS_213,
-                StandardConstants.STANDARD_AS_NZS_1754
+                StandardConstants.ECE_R129,
+                StandardConstants.CMVSS_213,
+                StandardConstants.FMVSS_213,
+                StandardConstants.AS_NZS_1754
             )
             ProductType.BABY_STROLLER -> listOf(
-                StandardConstants.STANDARD_GB_27887
+                StandardConstants.EN_1888,
+                StandardConstants.GB_14748,
+                StandardConstants.ASTM_F833,
+                StandardConstants.CAN_CSA_D425
             )
             ProductType.HIGH_CHAIR -> listOf(
-                StandardConstants.STANDARD_AS_NZS_1754
+                StandardConstants.EN_14988,
+                StandardConstants.GB_29281,
+                StandardConstants.CAN_CSA_Z217_1
             )
             ProductType.CHILD_BED -> listOf(
-                StandardConstants.STANDARD_FMVSS_213
+                StandardConstants.EN_716,
+                StandardConstants.GB_28007,
+                StandardConstants.CAN_CSA_D1169
             )
         }
     }
