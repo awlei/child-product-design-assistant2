@@ -23,16 +23,22 @@ android {
 
     signingConfigs {
         create("release") {
-            // 从环境变量或本地文件读取签名配置
-            val keystorePropertiesFile = rootProject.file("keystore.properties")
+            // 从 app 目录下的 keystore.properties 读取签名配置
+            val keystorePropertiesFile = project.file("keystore.properties")
             if (keystorePropertiesFile.exists()) {
                 val keystoreProperties = java.util.Properties()
                 keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
-                
+
                 storeFile = file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
+            } else {
+                // 如果没有 keystore.properties，使用默认配置（仅在本地开发时使用）
+                storeFile = file("release-keystore.jks")
+                storePassword = "test123456"
+                keyAlias = "test-key"
+                keyPassword = "test123456"
             }
         }
     }
