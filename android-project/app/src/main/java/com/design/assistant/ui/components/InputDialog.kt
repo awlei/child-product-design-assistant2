@@ -236,19 +236,23 @@ fun InputDialog(
                     }
                     Button(
                         onClick = {
-                            val params = InputParameters(
-                                productType = productType,
-                                standardSystem = standardSystem,
-                                minHeight = minHeight.toIntOrNull(),
-                                maxHeight = maxHeight.toIntOrNull(),
-                                minWeight = minWeight.toDoubleOrNull(),
-                                maxWeight = maxWeight.toDoubleOrNull(),
-                                ageRange = ageRange.ifEmpty { null },
-                                seatInstallationType = seatInstallationType.ifEmpty { null },
-                                vehicleType = vehicleType.ifEmpty { null },
-                                additionalRequirements = additionalRequirements.ifEmpty { null }
-                            )
-                            onConfirm(params)
+                            try {
+                                val params = InputParameters(
+                                    productType = productType,
+                                    standardSystem = standardSystem,
+                                    minHeight = minHeight.toIntOrNull()?.takeIf { it > 0 },
+                                    maxHeight = maxHeight.toIntOrNull()?.takeIf { it > 0 },
+                                    minWeight = minWeight.toDoubleOrNull()?.takeIf { it > 0 },
+                                    maxWeight = maxWeight.toDoubleOrNull()?.takeIf { it > 0 },
+                                    ageRange = ageRange.ifEmpty { null },
+                                    seatInstallationType = seatInstallationType.ifEmpty { null },
+                                    vehicleType = vehicleType.ifEmpty { null },
+                                    additionalRequirements = additionalRequirements.ifEmpty { null }
+                                )
+                                onConfirm(params)
+                            } catch (e: Exception) {
+                                android.util.Log.e("InputDialog", "创建参数失败", e)
+                            }
                         },
                         modifier = Modifier.weight(1f)
                     ) {
