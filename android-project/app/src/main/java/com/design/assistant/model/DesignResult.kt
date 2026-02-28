@@ -98,7 +98,7 @@ data class TestRequirements(
 data class FrontalImpactRequirement(
     val testName: String,
     val speed: String,              // 测试速度
-    deceleration: String,          // 减速度
+    val deceleration: String,          // 减速度
     val criteria: String,          // 通过标准
     val notes: String? = null      // 备注
 )
@@ -109,8 +109,8 @@ data class FrontalImpactRequirement(
 data class SideImpactRequirement(
     val testName: String,
     val impactSpeed: String,        // 撞击速度
-    maxChestCompression: String,    // 最大胸部压缩量
-    maxChestDeflection: String,    // 最大胸部挠度
+    val maxChestCompression: String,    // 最大胸部压缩量
+    val maxChestDeflection: String,    // 最大胸部挠度
     val criteria: String
 )
 

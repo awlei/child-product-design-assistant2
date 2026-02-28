@@ -18,6 +18,7 @@ import com.design.assistant.viewmodel.DesignGenerateVM
 import com.design.assistant.viewmodel.InputParametersVM
 import com.design.assistant.viewmodel.ProductStandardSelectVM
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
 
 /**
  * 主 Activity

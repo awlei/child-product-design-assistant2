@@ -442,7 +442,8 @@ object StandardDatabase {
             ),
             testRequirements = result.testRequirements.copy(
                 frontalImpact = result.testRequirements.frontalImpact.copy(
-                    speed = "48-50 km/h"
+                    speed = "48-50 km/h",
+                    deceleration = "28g - 32g"
                 )
             )
         )

@@ -127,10 +127,11 @@ fun HomeScreen(
                         showInputDialog = true
                     } else {
                         // 已有参数，直接生成
+                        val params = currentInputParameters
                         designVM.generateDesign(
                             productType = selectedProduct,
                             standardSystem = selectedStandard,
-                            inputParameters = currentInputParameters
+                            inputParameters = params!!
                         )
                     }
                 },
