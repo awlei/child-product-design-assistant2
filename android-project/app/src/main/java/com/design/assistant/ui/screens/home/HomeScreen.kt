@@ -5,11 +5,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -333,6 +338,171 @@ fun ResultCard(
             ) {
                 Text("查看完整详情")
             }
+        }
+    }
+}
+
+/**
+ * 产品选择器
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProductSelector(
+    selectedProduct: ProductType,
+    onProductSelected: (ProductType) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = selectedProduct.displayName,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("选择产品类型") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            ProductType.values().forEach { product ->
+                DropdownMenuItem(
+                    text = { Text(product.displayName) },
+                    onClick = {
+                        onProductSelected(product)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 标准选择器
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StandardSelector(
+    selectedStandard: String,
+    availableStandards: List<String>,
+    onStandardSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = selectedStandard,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("选择标准体系") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            availableStandards.forEach { standard ->
+                DropdownMenuItem(
+                    text = { Text(standard) },
+                    onClick = {
+                        onStandardSelected(standard)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 设计信息卡片
+ */
+@Composable
+fun DesignInfoCard(
+    product: ProductType,
+    standard: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "设计信息",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "产品：${product.displayName}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = "标准：$standard",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+/**
+ * 操作按钮
+ */
+@Composable
+fun ActionButtons(
+    isGenerating: Boolean,
+    showResultCard: Boolean,
+    onGenerateDesign: () -> Unit,
+    onViewHistory: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // 生成按钮
+        Button(
+            onClick = onGenerateDesign,
+            enabled = !isGenerating,
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = "生成",
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(if (isGenerating) "生成中..." else "生成设计方案")
+        }
+
+        // 历史按钮
+        OutlinedButton(
+            onClick = onViewHistory,
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(
+                imageVector = Icons.Default.History,
+                contentDescription = "历史",
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("查看历史")
         }
     }
 }
