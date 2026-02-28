@@ -1,20 +1,26 @@
 package com.design.assistant.ui.screens.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.design.assistant.constants.StandardConstants
 import com.design.assistant.model.ProductType
 import com.design.assistant.viewmodel.ProductStandardSelectVM
 
 /**
- * 首页 Screen
+ * 首页 Screen - 优化版
  * 提供产品选择、标准选择、设计生成等功能入口
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -24,14 +30,25 @@ fun HomeScreen(
 ) {
     var selectedProduct by remember { mutableStateOf<ProductType>(ProductType.CHILD_SEAT) }
     var selectedStandard by remember { mutableStateOf<String>(StandardConstants.ECE_R129) }
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+
+    // 根据屏幕宽度决定按钮布局
+    val isWideScreen = screenWidth > 400.dp
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("儿童产品设计助手") },
+                title = {
+                    Text(
+                        text = "儿童产品设计助手",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -40,9 +57,13 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
             // 产品选择
             ProductSelector(
                 selectedProduct = selectedProduct,
@@ -69,16 +90,23 @@ fun HomeScreen(
                 standard = selectedStandard
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             // 功能按钮
             ActionButtons(
-                onGenerateDesign = { /* TODO: 实现设计生成逻辑 */ }
+                isWideScreen = isWideScreen,
+                onGenerateDesign = { /* TODO: 实现设计生成逻辑 */ },
+                onViewHistory = { /* TODO: 查看历史设计 */ }
             )
+
+            // 底部安全区域
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 /**
- * 产品选择器
+ * 产品选择器 - 优化版
  */
 @Composable
 fun ProductSelector(
@@ -88,38 +116,42 @@ fun ProductSelector(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
                 text = "选择产品类型",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 使用 FilterChip 更适合触摸操作
             ProductType.values().forEach { product ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = selectedProduct == product,
-                        onClick = { onProductSelected(product) }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = when (product) {
-                            ProductType.CHILD_SEAT -> "儿童安全座椅"
-                            ProductType.BABY_STROLLER -> "婴儿推车"
-                            ProductType.HIGH_CHAIR -> "儿童高脚椅"
-                            ProductType.CHILD_BED -> "儿童床"
-                        }
-                    )
+                FilterChip(
+                    selected = selectedProduct == product,
+                    onClick = { onProductSelected(product) },
+                    label = {
+                        Text(
+                            when (product) {
+                                ProductType.CHILD_SEAT -> "儿童安全座椅"
+                                ProductType.BABY_STROLLER -> "婴儿推车"
+                                ProductType.HIGH_CHAIR -> "儿童高脚椅"
+                                ProductType.CHILD_BED -> "儿童床"
+                            },
+                            fontSize = 14.sp
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                if (product != ProductType.CHILD_BED) {
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
@@ -127,7 +159,7 @@ fun ProductSelector(
 }
 
 /**
- * 标准选择器
+ * 标准选择器 - 优化版（限制高度）
  */
 @Composable
 fun StandardSelector(
@@ -138,33 +170,41 @@ fun StandardSelector(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
                 text = "选择标准体系",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            LazyColumn {
-                items(availableStandards) { standard ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = selectedStandard == standard,
-                            onClick = { onStandardSelected(standard) }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = StandardConstants.getStandardName(standard))
-                    }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 限制高度，避免占据过多空间
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 240.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                availableStandards.forEach { standard ->
+                    FilterChip(
+                        selected = selectedStandard == standard,
+                        onClick = { onStandardSelected(standard) },
+                        label = {
+                            Text(
+                                StandardConstants.getStandardName(standard),
+                                fontSize = 14.sp
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    )
                 }
             }
         }
@@ -172,7 +212,7 @@ fun StandardSelector(
 }
 
 /**
- * 设计信息卡片
+ * 设计信息卡片 - 优化版
  */
 @Composable
 fun DesignInfoCard(
@@ -183,7 +223,9 @@ fun DesignInfoCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -192,49 +234,129 @@ fun DesignInfoCard(
             Text(
                 text = "设计参数",
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
-            Text(
-                text = "产品: ${when (product) {
+            Divider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f))
+            Spacer(modifier = Modifier.height(4.dp))
+
+            InfoRow(
+                label = "产品",
+                value = when (product) {
                     ProductType.CHILD_SEAT -> "儿童安全座椅"
                     ProductType.BABY_STROLLER -> "婴儿推车"
                     ProductType.HIGH_CHAIR -> "儿童高脚椅"
                     ProductType.CHILD_BED -> "儿童床"
-                }}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                }
             )
-            Text(
-                text = "标准: ${StandardConstants.getStandardName(standard)}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+            InfoRow(
+                label = "标准",
+                value = StandardConstants.getStandardName(standard)
             )
         }
     }
 }
 
 /**
- * 功能按钮
+ * 信息行组件
  */
 @Composable
-fun ActionButtons(
-    onGenerateDesign: () -> Unit
+fun InfoRow(
+    label: String,
+    value: String
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Button(
-            onClick = onGenerateDesign,
-            modifier = Modifier.weight(1f)
+        Text(
+            text = "$label:",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    }
+}
+
+/**
+ * 功能按钮 - 优化版（支持响应式布局）
+ */
+@Composable
+fun ActionButtons(
+    isWideScreen: Boolean,
+    onGenerateDesign: () -> Unit,
+    onViewHistory: () -> Unit
+) {
+    if (isWideScreen) {
+        // 宽屏：横向排列
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("生成设计方案")
+            Button(
+                onClick = onGenerateDesign,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    "生成设计方案",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            OutlinedButton(
+                onClick = onViewHistory,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    "查看历史",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
-        OutlinedButton(
-            onClick = { /* TODO: 查看历史设计 */ },
-            modifier = Modifier.weight(1f)
+    } else {
+        // 窄屏：纵向排列
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("查看历史")
+            Button(
+                onClick = onGenerateDesign,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    "生成设计方案",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            OutlinedButton(
+                onClick = onViewHistory,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    "查看历史",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }
