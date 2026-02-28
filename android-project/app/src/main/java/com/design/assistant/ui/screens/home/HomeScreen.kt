@@ -23,6 +23,10 @@ import com.design.assistant.viewmodel.ProductStandardSelectVM
  * 首页 Screen - 优化版
  * 提供产品选择、标准选择、设计生成等功能入口
  */
+
+/**
+ * 产品选择器 - 优化版
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -108,6 +112,7 @@ fun HomeScreen(
 /**
  * 产品选择器 - 优化版
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductSelector(
     selectedProduct: ProductType,
@@ -161,6 +166,7 @@ fun ProductSelector(
 /**
  * 标准选择器 - 优化版（限制高度）
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StandardSelector(
     selectedStandard: String,
