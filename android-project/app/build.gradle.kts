@@ -23,22 +23,42 @@ android {
 
     signingConfigs {
         create("release") {
-            // 从 app 目录下的 keystore.properties 读取签名配置
-            val keystorePropertiesFile = project.file("keystore.properties")
-            if (keystorePropertiesFile.exists()) {
-                val keystoreProperties = java.util.Properties()
-                keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+            // 优先级：环境变量 > keystore.properties > 默认值
+            val keystoreFile = System.getenv("KEYSTORE_FILE")
+            val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
+            val keyAlias = System.getenv("KEY_ALIAS")
+            val keyPassword = System.getenv("KEY_PASSWORD")
 
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
+            if (keystoreFile != null && keystorePassword != null && keyAlias != null && keyPassword != null) {
+                // 从环境变量读取
+                storeFile = file(keystoreFile)
+                storePassword = keystorePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
             } else {
-                // 如果没有 keystore.properties，使用默认配置（仅在本地开发时使用）
-                storeFile = file("release-keystore.jks")
-                storePassword = "test123456"
-                keyAlias = "test-key"
-                keyPassword = "test123456"
+                // 从 keystore.properties 读取，或使用默认值
+                val keystorePropertiesFile = project.layout.projectDirectory.file("keystore.properties").asFile
+
+                if (keystorePropertiesFile.exists()) {
+                    val keystoreProperties = java.util.Properties()
+                    keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+
+                    val storeFilePath = keystoreProperties["storeFile"] as String
+                    storeFile = if (storeFilePath.startsWith("/")) {
+                        file(storeFilePath)  // 绝对路径
+                    } else {
+                        project.layout.projectDirectory.file(storeFilePath).asFile  // 相对于 app 目录
+                    }
+                    storePassword = keystoreProperties["storePassword"] as String
+                    this.keyAlias = keystoreProperties["keyAlias"] as String
+                    this.keyPassword = keystoreProperties["keyPassword"] as String
+                } else {
+                    // 默认配置
+                    storeFile = project.layout.projectDirectory.file("release-keystore.jks").asFile
+                    storePassword = "test123456"
+                    this.keyAlias = "test-key"
+                    this.keyPassword = "test123456"
+                }
             }
         }
     }

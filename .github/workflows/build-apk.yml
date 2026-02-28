@@ -41,17 +41,6 @@ jobs:
           chmod +x gen-test-keystore.sh
           ./gen-test-keystore.sh
 
-      - name: Create keystore.properties (if no real keystore provided)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          cd android-project
-          cat > app/keystore.properties <<EOF
-          storeFile=release-keystore.jks
-          storePassword=test123456
-          keyAlias=test-key
-          keyPassword=test123456
-          EOF
-
       - name: Clean build cache
         run: cd android-project && ./gradlew clean --no-daemon
 
@@ -66,7 +55,18 @@ jobs:
 
       - name: Build Release APK
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: cd android-project && ./gradlew assembleRelease --stacktrace
+        run: |
+          cd android-project
+          export KEYSTORE_FILE=$PWD/app/release-keystore.jks
+          export KEYSTORE_PASSWORD=test123456
+          export KEY_ALIAS=test-key
+          export KEY_PASSWORD=test123456
+          ./gradlew assembleRelease --stacktrace
+        env:
+          KEYSTORE_FILE: ./android-project/app/release-keystore.jks
+          KEYSTORE_PASSWORD: test123456
+          KEY_ALIAS: test-key
+          KEY_PASSWORD: test123456
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
