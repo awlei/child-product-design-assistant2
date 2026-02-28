@@ -20,7 +20,11 @@ object StandardDatabase {
         standardSystem: String,
         inputParameters: InputParameters
     ): DesignResult {
-        Log.d(TAG, "生成设计方案 - 产品类型: $productType, 标准体系: $standardSystem")
+        Log.d(TAG, "========== generateDesignResult ==========")
+        Log.d(TAG, "产品类型: $productType")
+        Log.d(TAG, "标准体系: $standardSystem")
+        Log.d(TAG, "输入参数: $inputParameters")
+        Log.d(TAG, "========================================")
 
         return try {
             when (productType) {
@@ -31,6 +35,8 @@ object StandardDatabase {
             }
         } catch (e: Exception) {
             Log.e(TAG, "生成设计方案失败", e)
+            Log.e(TAG, "错误类型: ${e.javaClass.simpleName}")
+            Log.e(TAG, "错误信息: ${e.message}")
             // 返回一个默认的设计方案，避免崩溃
             generateDefaultDesign(productType, standardSystem, inputParameters)
         }

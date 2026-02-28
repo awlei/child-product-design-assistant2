@@ -8,8 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -43,6 +42,27 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    // 监听设计结果变化，自动导航到结果页
+                    val designResult by designVM.designResult.collectAsState()
+                    val isGenerating by designVM.isGenerating.collectAsState()
+                    var hasNavigatedToResult by remember { mutableStateOf(false) }
+
+                    // 当设计结果生成成功时，自动导航到结果页
+                    LaunchedEffect(designResult, isGenerating) {
+                        if (designResult != null && !isGenerating && !hasNavigatedToResult) {
+                            try {
+                                android.util.Log.d("MainActivity", "设计方案生成成功，导航到结果页")
+                                navController.navigate("designResult")
+                                hasNavigatedToResult = true
+                            } catch (e: Exception) {
+                                android.util.Log.e("MainActivity", "导航失败", e)
+                            }
+                        } else if (isGenerating) {
+                            // 重置导航标志，允许下次导航
+                            hasNavigatedToResult = false
+                        }
+                    }
+
                     NavHost(
                         navController = navController,
                         startDestination = "home"
@@ -56,16 +76,17 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("designResult") {
-                            val designResult by designVM.designResult.collectAsState()
+                            val resultDesignResult by designVM.designResult.collectAsState()
 
-                            if (designResult != null) {
-                                val result = designResult!!
+                            if (resultDesignResult != null) {
+                                val result = resultDesignResult!!
                                 DesignResultScreen(
                                     result = result,
                                     onBack = {
                                         try {
                                             navController.navigateUp()
                                             designVM.clearResult()
+                                            hasNavigatedToResult = false  // 重置导航标志
                                         } catch (e: Exception) {
                                             android.util.Log.e("MainActivity", "导航失败", e)
                                         }

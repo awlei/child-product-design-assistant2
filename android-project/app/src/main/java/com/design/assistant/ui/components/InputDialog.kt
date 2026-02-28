@@ -237,21 +237,32 @@ fun InputDialog(
                     Button(
                         onClick = {
                             try {
+                                // 安全地转换参数值
+                                val parsedMinHeight = if (minHeight.isNotEmpty()) minHeight.toIntOrNull() else null
+                                val parsedMaxHeight = if (maxHeight.isNotEmpty()) maxHeight.toIntOrNull() else null
+                                val parsedMinWeight = if (minWeight.isNotEmpty()) minWeight.toDoubleOrNull() else null
+                                val parsedMaxWeight = if (maxWeight.isNotEmpty()) maxWeight.toDoubleOrNull() else null
+
+                                // 创建参数对象
                                 val params = InputParameters(
                                     productType = productType,
                                     standardSystem = standardSystem,
-                                    minHeight = minHeight.toIntOrNull()?.takeIf { it > 0 },
-                                    maxHeight = maxHeight.toIntOrNull()?.takeIf { it > 0 },
-                                    minWeight = minWeight.toDoubleOrNull()?.takeIf { it > 0 },
-                                    maxWeight = maxWeight.toDoubleOrNull()?.takeIf { it > 0 },
+                                    minHeight = parsedMinHeight?.takeIf { it > 0 },
+                                    maxHeight = parsedMaxHeight?.takeIf { it > 0 },
+                                    minWeight = parsedMinWeight?.takeIf { it > 0 },
+                                    maxWeight = parsedMaxWeight?.takeIf { it > 0 },
                                     ageRange = ageRange.ifEmpty { null },
                                     seatInstallationType = seatInstallationType.ifEmpty { null },
                                     vehicleType = vehicleType.ifEmpty { null },
                                     additionalRequirements = additionalRequirements.ifEmpty { null }
                                 )
+
+                                android.util.Log.d("InputDialog", "创建参数成功: $params")
                                 onConfirm(params)
                             } catch (e: Exception) {
                                 android.util.Log.e("InputDialog", "创建参数失败", e)
+                                android.util.Log.e("InputDialog", "错误信息: ${e.message}")
+                                android.util.Log.e("InputDialog", "错误类型: ${e.javaClass.simpleName}")
                             }
                         },
                         modifier = Modifier.weight(1f)

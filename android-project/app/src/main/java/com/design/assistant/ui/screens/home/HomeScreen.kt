@@ -52,6 +52,15 @@ fun HomeScreen(
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
 
+    // 监听生成错误，自动显示错误对话框
+    LaunchedEffect(generateError, isGenerating) {
+        if (generateError != null && !isGenerating) {
+            Log.e(TAG, "生成设计方案失败: $generateError")
+            errorMessage = generateError ?: "未知错误"
+            showErrorDialog = true
+        }
+    }
+
     // 根据屏幕宽度决定按钮布局
     val isWideScreen = screenWidth > 400.dp
 
@@ -185,7 +194,19 @@ fun HomeScreen(
                 designVM.clearError()
             },
             title = { Text("错误") },
-            text = { Text(errorMessage) },
+            text = {
+                Column {
+                    Text(errorMessage)
+                    if (generateError != null && generateError != errorMessage) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "详细信息：$generateError",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -198,6 +219,7 @@ fun HomeScreen(
                 }
             }
         )
+    }
     }
 
     // 监听设计结果，自动跳转到结果页面
