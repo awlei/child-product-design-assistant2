@@ -7,7 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -358,7 +358,7 @@ fun ProductSelector(
         onExpandedChange = { expanded = it }
     ) {
         OutlinedTextField(
-            value = selectedProduct.displayName,
+            value = selectedProduct.typeName,
             onValueChange = {},
             readOnly = true,
             label = { Text("选择产品类型") },
@@ -373,7 +373,7 @@ fun ProductSelector(
         ) {
             ProductType.values().forEach { product ->
                 DropdownMenuItem(
-                    text = { Text(product.displayName) },
+                    text = { Text(product.typeName) },
                     onClick = {
                         onProductSelected(product)
                         expanded = false
@@ -451,7 +451,7 @@ fun DesignInfoCard(
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "产品：${product.displayName}",
+                text = "产品：${product.typeName}",
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
@@ -497,7 +497,7 @@ fun ActionButtons(
             modifier = Modifier.weight(1f)
         ) {
             Icon(
-                imageVector = Icons.Default.History,
+                imageVector = Icons.Default.List,
                 contentDescription = "历史",
                 modifier = Modifier.size(20.dp)
             )
