@@ -52,14 +52,28 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("designResult") {
-                            val designResult = designVM.designResult.collectAsState().value
+                            val designResult by designVM.designResult.collectAsState()
 
                             if (designResult != null) {
                                 DesignResultScreen(
                                     result = designResult,
                                     onBack = {
-                                        navController.navigateUp()
+                                        try {
+                                            navController.navigateUp()
+                                            designVM.clearResult()
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("MainActivity", "导航失败", e)
+                                        }
                                     }
+                                )
+                            } else {
+                                // 如果没有设计结果，显示加载或错误页面
+                                androidx.compose.material3.Text(
+                                    text = "未找到设计方案",
+                                    modifier = androidx.compose.ui.Modifier
+                                        .fillMaxSize()
+                                        .padding(16.dp),
+                                    style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
                                 )
                             }
                         }

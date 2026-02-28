@@ -33,6 +33,9 @@ class DesignGenerateVM : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    // 防重复生成的保护标志
+    private var isGeneratingInProgress = false
+
     /**
      * 生成设计方案
      * 根据产品类型、标准体系和用户输入参数生成完整的设计方案
@@ -42,12 +45,19 @@ class DesignGenerateVM : ViewModel() {
         standardSystem: String,
         inputParameters: InputParameters
     ) {
-        viewModelScope.launch {
-            _isGenerating.value = true
-            _errorMessage.value = null
-            _designResult.value = null
+        // 防止重复生成
+        if (isGeneratingInProgress) {
+            Log.w(TAG, "设计方案正在生成中，忽略重复请求")
+            return
+        }
 
+        viewModelScope.launch {
             try {
+                isGeneratingInProgress = true
+                _isGenerating.value = true
+                _errorMessage.value = null
+                _designResult.value = null
+
                 Log.d(TAG, "========== 开始生成设计方案 ==========")
                 Log.d(TAG, "产品类型: $productType")
                 Log.d(TAG, "标准体系: $standardSystem")
@@ -90,6 +100,7 @@ class DesignGenerateVM : ViewModel() {
                 _errorMessage.value = "生成设计方案失败: ${e.message}\n错误类型: ${e.javaClass.simpleName}"
             } finally {
                 _isGenerating.value = false
+                isGeneratingInProgress = false
             }
         }
     }

@@ -201,10 +201,20 @@ fun HomeScreen(
     }
 
     // 监听设计结果，自动跳转到结果页面
+    // 使用 remember 保存导航状态，避免重复导航
+    var hasNavigated by remember { mutableStateOf(false) }
+
     LaunchedEffect(designResult) {
-        if (designResult != null) {
-            Log.d(TAG, "设计方案生成成功，准备跳转到结果页面")
-            navController.navigate("designResult")
+        if (designResult != null && !hasNavigated) {
+            try {
+                Log.d(TAG, "设计方案生成成功，准备跳转到结果页面")
+                hasNavigated = true
+                navController.navigate("designResult")
+            } catch (e: Exception) {
+                Log.e(TAG, "导航失败", e)
+                errorMessage = "页面跳转失败: ${e.message}"
+                showErrorDialog = true
+            }
         }
     }
 
@@ -215,6 +225,11 @@ fun HomeScreen(
             errorMessage = generateError!!
             showErrorDialog = true
         }
+    }
+
+    // 重置导航状态（当返回首页时）
+    LaunchedEffect(Unit) {
+        hasNavigated = false
     }
 }
 
