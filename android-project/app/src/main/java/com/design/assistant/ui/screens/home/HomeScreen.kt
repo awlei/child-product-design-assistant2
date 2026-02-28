@@ -15,7 +15,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.design.assistant.constants.StandardConstants
+import com.design.assistant.model.DesignResult
 import com.design.assistant.model.InputParameters
 import com.design.assistant.model.ProductType
 import com.design.assistant.ui.components.InputDialog
@@ -33,13 +35,17 @@ import com.design.assistant.viewmodel.ProductStandardSelectVM
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    navController: NavController,
     selectVM: ProductStandardSelectVM = viewModel(),
-    inputVM: InputParametersVM = viewModel()
+    inputVM: InputParametersVM = viewModel(),
+    designVM: com.design.assistant.viewmodel.DesignGenerateVM = viewModel()
 ) {
     var selectedProduct by remember { mutableStateOf<ProductType>(ProductType.CHILD_SEAT) }
     var selectedStandard by remember { mutableStateOf<String>(StandardConstants.ECE_R129) }
     var showInputDialog by remember { mutableStateOf(false) }
     val currentInputParameters by inputVM.inputParameters.collectAsState()
+    val designResult by designVM.designResult.collectAsState()
+    val isGenerating by designVM.isGenerating.collectAsState()
 
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
@@ -114,8 +120,19 @@ fun HomeScreen(
             // 功能按钮
             ActionButtons(
                 isWideScreen = isWideScreen,
+                isGenerating = isGenerating,
+                hasInputParams = currentInputParameters != null,
                 onGenerateDesign = {
-                    showInputDialog = true
+                    if (currentInputParameters == null) {
+                        showInputDialog = true
+                    } else {
+                        // 已有参数，直接生成
+                        designVM.generateDesign(
+                            productType = selectedProduct,
+                            standardSystem = selectedStandard,
+                            inputParameters = currentInputParameters
+                        )
+                    }
                 },
                 onViewHistory = { /* TODO: 查看历史设计 */ }
             )
@@ -138,14 +155,25 @@ fun HomeScreen(
             // 验证参数
             val validation = params.validate()
             if (validation is com.design.assistant.model.ValidationResult.Success) {
-                // TODO: 调用设计生成逻辑
-                println("参数验证成功：${params.getSummary()}")
+                // 自动生成设计方案
+                designVM.generateDesign(
+                    productType = selectedProduct,
+                    standardSystem = selectedStandard,
+                    inputParameters = params
+                )
             } else if (validation is com.design.assistant.model.ValidationResult.Error) {
                 // TODO: 显示错误信息
                 println("参数验证失败：${validation.message}")
             }
         }
     )
+
+    // 监听设计结果，自动跳转到结果页面
+    LaunchedEffect(designResult) {
+        if (designResult != null) {
+            navController.navigate("designResult")
+        }
+    }
 }
 
 /**
@@ -334,6 +362,8 @@ fun InfoRow(
 @Composable
 fun ActionButtons(
     isWideScreen: Boolean,
+    isGenerating: Boolean,
+    hasInputParams: Boolean,
     onGenerateDesign: () -> Unit,
     onViewHistory: () -> Unit
 ) {
@@ -345,13 +375,21 @@ fun ActionButtons(
         ) {
             Button(
                 onClick = onGenerateDesign,
+                enabled = !isGenerating,
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
+                if (isGenerating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
                 Text(
-                    "生成设计方案",
+                    if (hasInputParams) "生成设计方案" else "输入参数",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -378,13 +416,21 @@ fun ActionButtons(
         ) {
             Button(
                 onClick = onGenerateDesign,
+                enabled = !isGenerating,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
+                if (isGenerating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
                 Text(
-                    "生成设计方案",
+                    if (hasInputParams) "生成设计方案" else "输入参数",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium
                 )
