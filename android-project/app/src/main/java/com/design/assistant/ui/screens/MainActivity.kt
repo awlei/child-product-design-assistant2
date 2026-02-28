@@ -11,14 +11,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
 import com.design.assistant.ui.screens.home.HomeScreen
 import com.design.assistant.ui.screens.result.DesignResultScreen
 import com.design.assistant.ui.theme.DesignAssistantTheme
 import com.design.assistant.viewmodel.DesignGenerateVM
 import com.design.assistant.viewmodel.InputParametersVM
 import com.design.assistant.viewmodel.ProductStandardSelectVM
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.collectAsState
 
 /**
  * 主 Activity
@@ -29,6 +29,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DesignAssistantTheme {
+                // 在 Activity 级别创建 ViewModel 实例，确保所有 Screen 共享同一个实例
+                val designVM: DesignGenerateVM = viewModel()
+                val inputVM: InputParametersVM = viewModel()
+                val selectVM: ProductStandardSelectVM = viewModel()
                 val navController = rememberNavController()
 
                 Surface(
@@ -40,10 +44,14 @@ class MainActivity : ComponentActivity() {
                         startDestination = "home"
                     ) {
                         composable("home") {
-                            HomeScreen(navController)
+                            HomeScreen(
+                                navController = navController,
+                                selectVM = selectVM,
+                                inputVM = inputVM,
+                                designVM = designVM
+                            )
                         }
                         composable("designResult") {
-                            val designVM: DesignGenerateVM = viewModel()
                             val designResult = designVM.designResult.collectAsState().value
 
                             if (designResult != null) {

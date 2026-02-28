@@ -42,6 +42,11 @@ class DesignGenerateVM : ViewModel() {
             _errorMessage.value = null
 
             try {
+                println("开始生成设计方案...")
+                println("产品类型: $productType")
+                println("标准体系: $standardSystem")
+                println("输入参数: $inputParameters")
+
                 // 模拟生成延迟
                 kotlinx.coroutines.delay(500)
 
@@ -52,8 +57,15 @@ class DesignGenerateVM : ViewModel() {
                     inputParameters = inputParameters
                 )
 
+                println("设计方案生成成功!")
+                println("产品名称: ${result.productName}")
+                println("标准名称: ${result.standardName}")
+                println("假人类型: ${result.basicAdaptationData.dummyInfo.dummyType}")
+
                 _designResult.value = result
             } catch (e: Exception) {
+                println("生成设计方案失败: ${e.message}")
+                e.printStackTrace()
                 _errorMessage.value = "生成设计方案失败: ${e.message}"
             } finally {
                 _isGenerating.value = false

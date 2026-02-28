@@ -14,7 +14,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.design.assistant.constants.StandardConstants
 import com.design.assistant.model.DesignResult
@@ -28,17 +27,13 @@ import com.design.assistant.viewmodel.ProductStandardSelectVM
  * 首页 Screen - 优化版
  * 提供产品选择、标准选择、设计生成等功能入口
  */
-
-/**
- * 产品选择器 - 优化版
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
-    selectVM: ProductStandardSelectVM = viewModel(),
-    inputVM: InputParametersVM = viewModel(),
-    designVM: com.design.assistant.viewmodel.DesignGenerateVM = viewModel()
+    selectVM: ProductStandardSelectVM,
+    inputVM: InputParametersVM,
+    designVM: com.design.assistant.viewmodel.DesignGenerateVM
 ) {
     var selectedProduct by remember { mutableStateOf<ProductType>(ProductType.CHILD_SEAT) }
     var selectedStandard by remember { mutableStateOf<String>(StandardConstants.ECE_R129) }
