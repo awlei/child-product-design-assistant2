@@ -16,7 +16,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.design.assistant.constants.StandardConstants
+import com.design.assistant.model.InputParameters
 import com.design.assistant.model.ProductType
+import com.design.assistant.ui.components.InputDialog
+import com.design.assistant.viewmodel.InputParametersVM
 import com.design.assistant.viewmodel.ProductStandardSelectVM
 
 /**
@@ -30,10 +33,14 @@ import com.design.assistant.viewmodel.ProductStandardSelectVM
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    selectVM: ProductStandardSelectVM = viewModel()
+    selectVM: ProductStandardSelectVM = viewModel(),
+    inputVM: InputParametersVM = viewModel()
 ) {
     var selectedProduct by remember { mutableStateOf<ProductType>(ProductType.CHILD_SEAT) }
     var selectedStandard by remember { mutableStateOf<String>(StandardConstants.ECE_R129) }
+    var showInputDialog by remember { mutableStateOf(false) }
+    val currentInputParameters by inputVM.inputParameters.collectAsState()
+
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
 
@@ -94,12 +101,22 @@ fun HomeScreen(
                 standard = selectedStandard
             )
 
+            // 参数摘要显示（当有输入参数时）
+            if (currentInputParameters != null) {
+                ParametersSummaryCard(
+                    parameters = currentInputParameters!!,
+                    onClear = { inputVM.clearInputParameters() }
+                )
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
             // 功能按钮
             ActionButtons(
                 isWideScreen = isWideScreen,
-                onGenerateDesign = { /* TODO: 实现设计生成逻辑 */ },
+                onGenerateDesign = {
+                    showInputDialog = true
+                },
                 onViewHistory = { /* TODO: 查看历史设计 */ }
             )
 
@@ -107,6 +124,28 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
+
+    // 输入对话框
+    InputDialog(
+        productType = selectedProduct,
+        standardSystem = selectedStandard,
+        visible = showInputDialog,
+        onDismiss = { showInputDialog = false },
+        onConfirm = { params ->
+            inputVM.setInputParameters(params)
+            showInputDialog = false
+
+            // 验证参数
+            val validation = params.validate()
+            if (validation is com.design.assistant.model.ValidationResult.Success) {
+                // TODO: 调用设计生成逻辑
+                println("参数验证成功：${params.getSummary()}")
+            } else if (validation is com.design.assistant.model.ValidationResult.Error) {
+                // TODO: 显示错误信息
+                println("参数验证失败：${validation.message}")
+            }
+        }
+    )
 }
 
 /**
@@ -362,6 +401,64 @@ fun ActionButtons(
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium
                 )
+            }
+        }
+    }
+}
+
+/**
+ * 参数摘要卡片
+ * 显示用户输入的设计参数摘要
+ */
+@Composable
+fun ParametersSummaryCard(
+    parameters: InputParameters,
+    onClear: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "输入参数",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                // 清除按钮
+                TextButton(
+                    onClick = onClear
+                ) {
+                    Text("清除")
+                }
+            }
+            Divider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.3f))
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // 显示参数摘要
+            parameters.getSummary().split("\n").forEach { line ->
+                if (line.isNotEmpty()) {
+                    val parts = line.split("：")
+                    if (parts.size == 2) {
+                        InfoRow(
+                            label = parts[0],
+                            value = parts[1]
+                        )
+                    }
+                }
             }
         }
     }
