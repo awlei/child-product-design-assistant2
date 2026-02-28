@@ -45,16 +45,28 @@ class DesignGenerateVM : ViewModel() {
         viewModelScope.launch {
             _isGenerating.value = true
             _errorMessage.value = null
+            _designResult.value = null
 
             try {
-                Log.d(TAG, "开始生成设计方案...")
+                Log.d(TAG, "========== 开始生成设计方案 ==========")
                 Log.d(TAG, "产品类型: $productType")
                 Log.d(TAG, "标准体系: $standardSystem")
-                Log.d(TAG, "输入参数: $inputParameters")
+                Log.d(TAG, "输入参数详情:")
+                Log.d(TAG, "  - 产品类型参数: ${inputParameters.productType}")
+                Log.d(TAG, "  - 标准体系参数: ${inputParameters.standardSystem}")
+                Log.d(TAG, "  - 最小身高: ${inputParameters.minHeight} cm")
+                Log.d(TAG, "  - 最大身高: ${inputParameters.maxHeight} cm")
+                Log.d(TAG, "  - 最小体重: ${inputParameters.minWeight} kg")
+                Log.d(TAG, "  - 最大体重: ${inputParameters.maxWeight} kg")
+                Log.d(TAG, "  - 年龄范围: ${inputParameters.ageRange}")
+                Log.d(TAG, "  - 安装方式: ${inputParameters.seatInstallationType}")
+                Log.d(TAG, "  - 车辆类型: ${inputParameters.vehicleType}")
+                Log.d(TAG, "  - 其他要求: ${inputParameters.additionalRequirements}")
 
                 // 模拟生成延迟
                 kotlinx.coroutines.delay(500)
 
+                Log.d(TAG, "调用 StandardDatabase.generateDesignResult()...")
                 // 调用标准数据库生成设计方案
                 val result = StandardDatabase.generateDesignResult(
                     productType = productType,
@@ -66,11 +78,16 @@ class DesignGenerateVM : ViewModel() {
                 Log.d(TAG, "产品名称: ${result.productName}")
                 Log.d(TAG, "标准名称: ${result.standardName}")
                 Log.d(TAG, "假人类型: ${result.basicAdaptationData.dummyInfo.dummyType}")
+                Log.d(TAG, "=========================================")
 
                 _designResult.value = result
             } catch (e: Exception) {
                 Log.e(TAG, "生成设计方案失败", e)
-                _errorMessage.value = "生成设计方案失败: ${e.message}"
+                Log.e(TAG, "错误类型: ${e.javaClass.simpleName}")
+                Log.e(TAG, "错误信息: ${e.message}")
+                Log.e(TAG, "堆栈跟踪:", e)
+
+                _errorMessage.value = "生成设计方案失败: ${e.message}\n错误类型: ${e.javaClass.simpleName}"
             } finally {
                 _isGenerating.value = false
             }

@@ -152,12 +152,15 @@ fun HomeScreen(
         visible = showInputDialog,
         onDismiss = { showInputDialog = false },
         onConfirm = { params ->
-            inputVM.setInputParameters(params)
-            showInputDialog = false
+            Log.d(TAG, "用户确认输入参数: $params")
 
             // 验证参数
             val validation = params.validate()
             if (validation is com.design.assistant.model.ValidationResult.Success) {
+                Log.d(TAG, "参数验证成功，开始生成设计方案")
+                inputVM.setInputParameters(params)
+                showInputDialog = false
+
                 // 自动生成设计方案
                 designVM.generateDesign(
                     productType = selectedProduct,
@@ -165,8 +168,10 @@ fun HomeScreen(
                     inputParameters = params
                 )
             } else if (validation is com.design.assistant.model.ValidationResult.Error) {
-                // TODO: 显示错误信息
-                println("参数验证失败：${validation.message}")
+                Log.e(TAG, "参数验证失败: ${validation.message}")
+                // 显示错误信息给用户
+                errorMessage = "参数验证失败：${validation.message}"
+                showErrorDialog = true
             }
         }
     )
