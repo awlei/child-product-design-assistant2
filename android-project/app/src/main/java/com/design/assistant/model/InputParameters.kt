@@ -30,38 +30,50 @@ data class InputParameters(
     fun validate(): ValidationResult {
         val errors = mutableListOf<String>()
 
-        // 根据标准体系验证必填字段
-        when (standardSystem) {
-            "ECE R129" -> {
-                // 欧标需要身高范围
-                if (minHeight == null || maxHeight == null) {
-                    errors.add("欧标需要输入身高范围")
-                } else if (minHeight!! <= 0 || maxHeight!! <= 0) {
-                    errors.add("身高必须大于 0")
-                } else if (minHeight!! >= maxHeight!!) {
-                    errors.add("最小身高必须小于最大身高")
-                } else if (maxHeight!! - minHeight!! > 50) {
-                    errors.add("身高范围过大，建议不超过 50cm")
+        try {
+            // 根据标准体系验证必填字段
+            when (standardSystem) {
+                "ECE R129" -> {
+                    // 欧标需要身高范围
+                    if (minHeight == null || maxHeight == null) {
+                        errors.add("欧标需要输入身高范围")
+                    } else {
+                        val min = minHeight!!
+                        val max = maxHeight!!
+                        if (min <= 0 || max <= 0) {
+                            errors.add("身高必须大于 0")
+                        } else if (min >= max) {
+                            errors.add("最小身高必须小于最大身高")
+                        } else if (max - min > 50) {
+                            errors.add("身高范围过大，建议不超过 50cm")
+                        }
+                    }
+                }
+                "FMVSS 213", "CMVSS 213" -> {
+                    // 美标和加标需要体重范围
+                    if (minWeight == null || maxWeight == null) {
+                        errors.add("美标需要输入体重范围")
+                    } else {
+                        val min = minWeight!!
+                        val max = maxWeight!!
+                        if (min <= 0 || max <= 0) {
+                            errors.add("体重必须大于 0")
+                        } else if (min >= max) {
+                            errors.add("最小体重必须小于最大体重")
+                        } else if (max - min > 20) {
+                            errors.add("体重范围过大，建议不超过 20kg")
+                        }
+                    }
+                }
+                "GB 27887-2024", "AS/NZS 1754" -> {
+                    // 国标和澳标可能需要身高和体重
+                    if (minHeight == null && maxHeight == null && minWeight == null && maxWeight == null) {
+                        errors.add("需要输入身高范围或体重范围")
+                    }
                 }
             }
-            "FMVSS 213", "CMVSS 213" -> {
-                // 美标和加标需要体重范围
-                if (minWeight == null || maxWeight == null) {
-                    errors.add("美标需要输入体重范围")
-                } else if (minWeight!! <= 0 || maxWeight!! <= 0) {
-                    errors.add("体重必须大于 0")
-                } else if (minWeight!! >= maxWeight!!) {
-                    errors.add("最小体重必须小于最大体重")
-                } else if (maxWeight!! - minWeight!! > 20) {
-                    errors.add("体重范围过大，建议不超过 20kg")
-                }
-            }
-            "GB 27887-2024", "AS/NZS 1754" -> {
-                // 国标和澳标可能需要身高和体重
-                if (minHeight == null && maxHeight == null && minWeight == null && maxWeight == null) {
-                    errors.add("需要输入身高范围或体重范围")
-                }
-            }
+        } catch (e: Exception) {
+            errors.add("参数验证异常: ${e.message}")
         }
 
         return if (errors.isEmpty()) {

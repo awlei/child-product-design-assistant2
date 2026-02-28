@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import android.util.Log
 import com.design.assistant.constants.StandardConstants
 import com.design.assistant.model.DesignResult
 import com.design.assistant.model.InputParameters
@@ -35,12 +36,19 @@ fun HomeScreen(
     inputVM: InputParametersVM,
     designVM: com.design.assistant.viewmodel.DesignGenerateVM
 ) {
+    companion object {
+        private const val TAG = "HomeScreen"
+    }
+
     var selectedProduct by remember { mutableStateOf<ProductType>(ProductType.CHILD_SEAT) }
     var selectedStandard by remember { mutableStateOf<String>(StandardConstants.ECE_R129) }
     var showInputDialog by remember { mutableStateOf(false) }
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
     val currentInputParameters by inputVM.inputParameters.collectAsState()
     val designResult by designVM.designResult.collectAsState()
     val isGenerating by designVM.isGenerating.collectAsState()
+    val generateError by designVM.errorMessage.collectAsState()
 
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
@@ -164,10 +172,44 @@ fun HomeScreen(
         }
     )
 
+    // 错误提示对话框
+    if (showErrorDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showErrorDialog = false
+                errorMessage = ""
+                designVM.clearError()
+            },
+            title = { Text("错误") },
+            text = { Text(errorMessage) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showErrorDialog = false
+                        errorMessage = ""
+                        designVM.clearError()
+                    }
+                ) {
+                    Text("确定")
+                }
+            }
+        )
+    }
+
     // 监听设计结果，自动跳转到结果页面
     LaunchedEffect(designResult) {
         if (designResult != null) {
+            Log.d(TAG, "设计方案生成成功，准备跳转到结果页面")
             navController.navigate("designResult")
+        }
+    }
+
+    // 监听错误信息
+    LaunchedEffect(generateError) {
+        if (generateError != null) {
+            Log.e(TAG, "生成设计方案失败: $generateError")
+            errorMessage = generateError!!
+            showErrorDialog = true
         }
     }
 }

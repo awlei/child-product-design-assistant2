@@ -1,5 +1,6 @@
 package com.design.assistant.database
 
+import android.util.Log
 import com.design.assistant.constants.StandardConstants
 import com.design.assistant.model.*
 
@@ -8,6 +9,7 @@ import com.design.assistant.model.*
  * 包含不同标准体系的详细要求，用于生成设计方案
  */
 object StandardDatabase {
+    private const val TAG = "StandardDatabase"
 
     /**
      * 生成设计方案
@@ -18,11 +20,19 @@ object StandardDatabase {
         standardSystem: String,
         inputParameters: InputParameters
     ): DesignResult {
-        return when (productType) {
-            ProductType.CHILD_SEAT -> generateChildSeatDesign(standardSystem, inputParameters)
-            ProductType.BABY_STROLLER -> generateBabyStrollerDesign(standardSystem, inputParameters)
-            ProductType.HIGH_CHAIR -> generateHighChairDesign(standardSystem, inputParameters)
-            ProductType.CHILD_BED -> generateChildBedDesign(standardSystem, inputParameters)
+        Log.d(TAG, "生成设计方案 - 产品类型: $productType, 标准体系: $standardSystem")
+
+        return try {
+            when (productType) {
+                ProductType.CHILD_SEAT -> generateChildSeatDesign(standardSystem, inputParameters)
+                ProductType.BABY_STROLLER -> generateBabyStrollerDesign(standardSystem, inputParameters)
+                ProductType.HIGH_CHAIR -> generateHighChairDesign(standardSystem, inputParameters)
+                ProductType.CHILD_BED -> generateChildBedDesign(standardSystem, inputParameters)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "生成设计方案失败", e)
+            // 返回一个默认的设计方案，避免崩溃
+            generateDefaultDesign(productType, standardSystem, inputParameters)
         }
     }
 
@@ -33,13 +43,20 @@ object StandardDatabase {
         standardSystem: String,
         inputParameters: InputParameters
     ): DesignResult {
-        return when (standardSystem) {
-            StandardConstants.ECE_R129 -> generateECE_R129_ChildSeat(inputParameters)
-            StandardConstants.FMVSS_213 -> generateFMVSS_213_ChildSeat(inputParameters)
-            StandardConstants.CMVSS_213 -> generateCMVSS_213_ChildSeat(inputParameters)
-            StandardConstants.AS_NZS_1754 -> generateAS_NZS_1754_ChildSeat(inputParameters)
-            StandardConstants.GB_27887_2024 -> generateGB_27887_2024_ChildSeat(inputParameters)
-            else -> generateDefaultChildSeat(inputParameters)
+        Log.d(TAG, "生成儿童安全座椅设计方案 - 标准体系: $standardSystem")
+
+        return try {
+            when (standardSystem) {
+                StandardConstants.ECE_R129 -> generateECE_R129_ChildSeat(inputParameters)
+                StandardConstants.FMVSS_213 -> generateFMVSS_213_ChildSeat(inputParameters)
+                StandardConstants.CMVSS_213 -> generateCMVSS_213_ChildSeat(inputParameters)
+                StandardConstants.AS_NZS_1754 -> generateAS_NZS_1754_ChildSeat(inputParameters)
+                StandardConstants.GB_27887_2024 -> generateGB_27887_2024_ChildSeat(inputParameters)
+                else -> generateDefaultChildSeat(inputParameters)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "生成儿童安全座椅设计方案失败", e)
+            generateDefaultChildSeat(inputParameters)
         }
     }
 
@@ -47,8 +64,12 @@ object StandardDatabase {
      * ECE R129 儿童安全座椅设计方案
      */
     private fun generateECE_R129_ChildSeat(input: InputParameters): DesignResult {
-        val minHeight = input.minHeight ?: 40
-        val maxHeight = input.maxHeight ?: 105
+        Log.d(TAG, "生成 ECE R129 儿童安全座椅设计方案")
+        Log.d(TAG, "输入参数: minHeight=${input.minHeight}, maxHeight=${input.maxHeight}")
+
+        // 添加安全检查
+        val minHeight = (input.minHeight ?: 40).coerceAtLeast(40)
+        val maxHeight = (input.maxHeight ?: 105).coerceAtLeast(minHeight + 10)
 
         // 根据身高范围确定分组
         val (group, dummyType) = when {
@@ -630,5 +651,84 @@ object StandardDatabase {
             weight <= 36.0 -> "7 岁 - 12 岁"
             else -> "10 岁 - 12 岁"
         }
+    }
+
+    /**
+     * 生成默认设计方案（用于错误处理）
+     */
+    private fun generateDefaultDesign(
+        productType: ProductType,
+        standardSystem: String,
+        inputParameters: InputParameters
+    ): DesignResult {
+        Log.w(TAG, "使用默认设计方案生成逻辑")
+
+        val productName = when (productType) {
+            ProductType.CHILD_SEAT -> "儿童安全座椅"
+            ProductType.BABY_STROLLER -> "婴儿推车"
+            ProductType.HIGH_CHAIR -> "儿童高脚椅"
+            ProductType.CHILD_BED -> "儿童床"
+        }
+
+        return DesignResult(
+            productType = productType,
+            productName = productName,
+            standardSystem = standardSystem,
+            standardName = StandardConstants.getStandardName(standardSystem),
+            inputParameters = inputParameters,
+            applicableStandards = ApplicableStandards(
+                standardCode = standardSystem,
+                standardName = StandardConstants.getStandardName(standardSystem),
+                version = "待完善",
+                effectiveDate = "待完善",
+                issuingBody = "待完善"
+            ),
+            basicAdaptationData = BasicAdaptationData(
+                dummyInfo = DummyInfo(
+                    dummyType = "通用假人",
+                    heightRange = "待完善",
+                    weightRange = "待完善",
+                    installationDirection = "待完善",
+                    ageGroup = "待完善"
+                )
+            ),
+            designParameters = DesignParameters(
+                headrestHeight = "待完善",
+                seatWidth = "待完善",
+                envelope = EnvelopeInfo(
+                    sizeClass = "待完善",
+                    length = "待完善",
+                    width = "待完善",
+                    height = "待完善",
+                    description = "待完善"
+                ),
+                sideImpactArea = "待完善"
+            ),
+            testRequirements = TestRequirements(
+                frontalImpact = FrontalImpactRequirement(
+                    testName = "待完善",
+                    speed = "待完善",
+                    deceleration = "待完善",
+                    criteria = "待完善"
+                ),
+                sideImpactChestCompression = SideImpactRequirement(
+                    testName = "待完善",
+                    impactSpeed = "待完善",
+                    maxChestCompression = "待完善",
+                    maxChestDeflection = "待完善",
+                    criteria = "待完善"
+                ),
+                harnessStrength = HarnessStrengthRequirement(
+                    testName = "待完善",
+                    testLoad = "待完善",
+                    duration = "待完善",
+                    elongationLimit = "待完善",
+                    criteria = "待完善"
+                )
+            ),
+            standardTestItems = StandardTestItems(
+                dynamicTests = emptyList()
+            )
+        )
     }
 }

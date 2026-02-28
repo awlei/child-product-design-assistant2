@@ -1,5 +1,6 @@
 package com.design.assistant.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.design.assistant.database.StandardDatabase
@@ -16,6 +17,10 @@ import kotlinx.coroutines.launch
  * 负责生成专业儿童产品设计方案
  */
 class DesignGenerateVM : ViewModel() {
+    companion object {
+        private const val TAG = "DesignGenerateVM"
+    }
+
     // 生成状态
     private val _isGenerating = MutableStateFlow(false)
     val isGenerating: StateFlow<Boolean> = _isGenerating.asStateFlow()
@@ -42,10 +47,10 @@ class DesignGenerateVM : ViewModel() {
             _errorMessage.value = null
 
             try {
-                println("开始生成设计方案...")
-                println("产品类型: $productType")
-                println("标准体系: $standardSystem")
-                println("输入参数: $inputParameters")
+                Log.d(TAG, "开始生成设计方案...")
+                Log.d(TAG, "产品类型: $productType")
+                Log.d(TAG, "标准体系: $standardSystem")
+                Log.d(TAG, "输入参数: $inputParameters")
 
                 // 模拟生成延迟
                 kotlinx.coroutines.delay(500)
@@ -57,15 +62,14 @@ class DesignGenerateVM : ViewModel() {
                     inputParameters = inputParameters
                 )
 
-                println("设计方案生成成功!")
-                println("产品名称: ${result.productName}")
-                println("标准名称: ${result.standardName}")
-                println("假人类型: ${result.basicAdaptationData.dummyInfo.dummyType}")
+                Log.d(TAG, "设计方案生成成功!")
+                Log.d(TAG, "产品名称: ${result.productName}")
+                Log.d(TAG, "标准名称: ${result.standardName}")
+                Log.d(TAG, "假人类型: ${result.basicAdaptationData.dummyInfo.dummyType}")
 
                 _designResult.value = result
             } catch (e: Exception) {
-                println("生成设计方案失败: ${e.message}")
-                e.printStackTrace()
+                Log.e(TAG, "生成设计方案失败", e)
                 _errorMessage.value = "生成设计方案失败: ${e.message}"
             } finally {
                 _isGenerating.value = false
