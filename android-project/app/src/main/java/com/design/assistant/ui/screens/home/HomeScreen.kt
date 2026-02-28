@@ -24,6 +24,8 @@ import com.design.assistant.ui.components.InputDialog
 import com.design.assistant.viewmodel.InputParametersVM
 import com.design.assistant.viewmodel.ProductStandardSelectVM
 
+private const val TAG = "HomeScreen"
+
 /**
  * 首页 Screen - 优化版
  * 提供产品选择、标准选择、设计生成等功能入口
@@ -36,9 +38,6 @@ fun HomeScreen(
     inputVM: InputParametersVM,
     designVM: com.design.assistant.viewmodel.DesignGenerateVM
 ) {
-    companion object {
-        private const val TAG = "HomeScreen"
-    }
 
     var selectedProduct by remember { mutableStateOf<ProductType>(ProductType.CHILD_SEAT) }
     var selectedStandard by remember { mutableStateOf<String>(StandardConstants.ECE_R129) }
