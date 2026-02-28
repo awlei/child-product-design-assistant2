@@ -88,27 +88,33 @@ fun HomeScreen(
         val params = when {
             selectedStandard.contains("ECE R129") -> {
                 InputParameters(
-                    minWeight = 0.0,
-                    maxWeight = 0.0,
-                    minHeight = minHeight.toDoubleOrNull() ?: 0.0,
-                    maxHeight = maxHeight.toDoubleOrNull() ?: 0.0
+                    productType = selectedProduct,
+                    standardSystem = selectedStandard,
+                    minHeight = minHeight.toIntOrNull(),
+                    maxHeight = maxHeight.toIntOrNull(),
+                    minWeight = null,
+                    maxWeight = null
                 )
             }
             selectedStandard.contains("FMVSS") || selectedStandard.contains("CMVSS") -> {
                 InputParameters(
-                    minWeight = minWeight.toDoubleOrNull() ?: 0.0,
-                    maxWeight = maxWeight.toDoubleOrNull() ?: 0.0,
-                    minHeight = 0.0,
-                    maxHeight = 0.0
+                    productType = selectedProduct,
+                    standardSystem = selectedStandard,
+                    minHeight = null,
+                    maxHeight = null,
+                    minWeight = minWeight.toDoubleOrNull(),
+                    maxWeight = maxWeight.toDoubleOrNull()
                 )
             }
             else -> {
                 // GB 标准，身高和体重都需要
                 InputParameters(
-                    minWeight = minWeight.toDoubleOrNull() ?: 0.0,
-                    maxWeight = maxWeight.toDoubleOrNull() ?: 0.0,
-                    minHeight = minHeight.toDoubleOrNull() ?: 0.0,
-                    maxHeight = maxHeight.toDoubleOrNull() ?: 0.0
+                    productType = selectedProduct,
+                    standardSystem = selectedStandard,
+                    minHeight = minHeight.toIntOrNull(),
+                    maxHeight = maxHeight.toIntOrNull(),
+                    minWeight = minWeight.toDoubleOrNull(),
+                    maxWeight = maxWeight.toDoubleOrNull()
                 )
             }
         }
