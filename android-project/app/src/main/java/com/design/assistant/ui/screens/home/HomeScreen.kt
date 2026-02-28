@@ -3,20 +3,18 @@ package com.design.assistant.ui.screens.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -25,15 +23,14 @@ import com.design.assistant.constants.StandardConstants
 import com.design.assistant.model.DesignResult
 import com.design.assistant.model.InputParameters
 import com.design.assistant.model.ProductType
-import com.design.assistant.ui.components.InputDialog
 import com.design.assistant.viewmodel.InputParametersVM
 import com.design.assistant.viewmodel.ProductStandardSelectVM
 
 private const val TAG = "HomeScreen"
 
 /**
- * 首页 Screen - 重新设计版
- * 简化流程，避免复杂的自动导航
+ * 首页 Screen - 重新设计版（输入表单模式）
+ * 先用户输入参数，后生成并显示结果
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,10 +43,15 @@ fun HomeScreen(
     // UI 状态
     var selectedProduct by remember { mutableStateOf<ProductType>(ProductType.CHILD_SEAT) }
     var selectedStandard by remember { mutableStateOf<String>(StandardConstants.ECE_R129) }
-    var showInputDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var showResultCard by remember { mutableStateOf(false) }
+
+    // 输入参数状态
+    var minWeight by remember { mutableStateOf("") }
+    var maxWeight by remember { mutableStateOf("") }
+    var minHeight by remember { mutableStateOf("") }
+    var maxHeight by remember { mutableStateOf("") }
 
     // ViewModel 状态
     val currentInputParameters by inputVM.inputParameters.collectAsState()
@@ -75,6 +77,62 @@ fun HomeScreen(
                 errorMessage = generateError ?: "未知错误"
                 showErrorDialog = true
             }
+        }
+    }
+
+    // 确认生成
+    fun onConfirmGenerate() {
+        Log.d(TAG, "用户确认输入参数")
+
+        // 根据标准体系创建参数
+        val params = when {
+            selectedStandard.contains("ECE R129") -> {
+                InputParameters(
+                    minWeight = 0.0,
+                    maxWeight = 0.0,
+                    minHeight = minHeight.toDoubleOrNull() ?: 0.0,
+                    maxHeight = maxHeight.toDoubleOrNull() ?: 0.0
+                )
+            }
+            selectedStandard.contains("FMVSS") || selectedStandard.contains("CMVSS") -> {
+                InputParameters(
+                    minWeight = minWeight.toDoubleOrNull() ?: 0.0,
+                    maxWeight = maxWeight.toDoubleOrNull() ?: 0.0,
+                    minHeight = 0.0,
+                    maxHeight = 0.0
+                )
+            }
+            else -> {
+                // GB 标准，身高和体重都需要
+                InputParameters(
+                    minWeight = minWeight.toDoubleOrNull() ?: 0.0,
+                    maxWeight = maxWeight.toDoubleOrNull() ?: 0.0,
+                    minHeight = minHeight.toDoubleOrNull() ?: 0.0,
+                    maxHeight = maxHeight.toDoubleOrNull() ?: 0.0
+                )
+            }
+        }
+
+        // 验证参数
+        val validation = params.validate()
+        if (validation is com.design.assistant.model.ValidationResult.Success) {
+            Log.d(TAG, "参数验证成功，开始生成设计方案")
+            inputVM.setInputParameters(params)
+
+            // 清除之前的结果
+            designVM.clearResult()
+            showResultCard = false
+
+            // 生成设计方案
+            designVM.generateDesign(
+                productType = selectedProduct,
+                standardSystem = selectedStandard,
+                inputParameters = params
+            )
+        } else if (validation is com.design.assistant.model.ValidationResult.Error) {
+            Log.e(TAG, "参数验证失败: ${validation.message}")
+            errorMessage = "参数验证失败：${validation.message}"
+            showErrorDialog = true
         }
     }
 
@@ -126,10 +184,19 @@ fun HomeScreen(
                 }
             )
 
-            // 设计信息显示
-            DesignInfoCard(
-                product = selectedProduct,
-                standard = selectedStandard
+            // 输入参数表单
+            InputParametersForm(
+                standard = selectedStandard,
+                minHeight = minHeight,
+                maxHeight = maxHeight,
+                minWeight = minWeight,
+                maxWeight = maxWeight,
+                onMinHeightChange = { minHeight = it },
+                onMaxHeightChange = { maxHeight = it },
+                onMinWeightChange = { minWeight = it },
+                onMaxWeightChange = { maxWeight = it },
+                onConfirm = { onConfirmGenerate() },
+                isGenerating = isGenerating
             )
 
             // 加载状态
@@ -145,58 +212,9 @@ fun HomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 功能按钮
-            ActionButtons(
-                isGenerating = isGenerating,
-                showResultCard = showResultCard,
-                onGenerateDesign = {
-                    // 清除之前的结果
-                    designVM.clearResult()
-                    showResultCard = false
-
-                    // 打开输入对话框
-                    showInputDialog = true
-                },
-                onViewHistory = { /* TODO: 查看历史设计 */ }
-            )
-
-            // 底部安全区域
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
-
-    // 输入对话框
-    InputDialog(
-        productType = selectedProduct,
-        standardSystem = selectedStandard,
-        visible = showInputDialog,
-        onDismiss = { showInputDialog = false },
-        onConfirm = { params ->
-            Log.d(TAG, "用户确认输入参数: $params")
-
-            // 验证参数
-            val validation = params.validate()
-            if (validation is com.design.assistant.model.ValidationResult.Success) {
-                Log.d(TAG, "参数验证成功，开始生成设计方案")
-                inputVM.setInputParameters(params)
-                showInputDialog = false
-
-                // 生成设计方案
-                designVM.generateDesign(
-                    productType = selectedProduct,
-                    standardSystem = selectedStandard,
-                    inputParameters = params
-                )
-            } else if (validation is com.design.assistant.model.ValidationResult.Error) {
-                Log.e(TAG, "参数验证失败: ${validation.message}")
-                // 显示错误信息给用户
-                errorMessage = "参数验证失败：${validation.message}"
-                showErrorDialog = true
-            }
-        }
-    )
 
     // 错误提示对话框
     if (showErrorDialog) {
@@ -222,6 +240,142 @@ fun HomeScreen(
         )
     }
 }
+
+/**
+ * 输入参数表单
+ * 根据标准体系显示不同的输入字段
+ */
+@Composable
+fun InputParametersForm(
+    standard: String,
+    minHeight: String,
+    maxHeight: String,
+    minWeight: String,
+    maxWeight: String,
+    onMinHeightChange: (String) -> Unit,
+    onMaxHeightChange: (String) -> Unit,
+    onMinWeightChange: (String) -> Unit,
+    onMaxWeightChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    isGenerating: Boolean
+) {
+    val needHeight = standard.contains("ECE R129") || standard.contains("GB") || standard.contains("AS/NZS")
+    val needWeight = standard.contains("FMVSS") || standard.contains("CMVSS") || standard.contains("GB") || standard.contains("AS/NZS")
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // 标题
+            Text(
+                text = "输入参数",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Divider()
+
+            // 身高输入
+            if (needHeight) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "身高范围 (cm)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = minHeight,
+                            onValueChange = onMinHeightChange,
+                            label = { Text("最小身高") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                            )
+                        )
+                        OutlinedTextField(
+                            value = maxHeight,
+                            onValueChange = onMaxHeightChange,
+                            label = { Text("最大身高") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                            )
+                        )
+                    }
+                }
+                Divider()
+            }
+
+            // 体重输入
+            if (needWeight) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "体重范围 (kg)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = minWeight,
+                            onValueChange = onMinWeightChange,
+                            label = { Text("最小体重") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                            )
+                        )
+                        OutlinedTextField(
+                            value = maxWeight,
+                            onValueChange = onMaxWeightChange,
+                            label = { Text("最大体重") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                            )
+                        )
+                    }
+                }
+                Divider()
+            }
+
+            // 确认按钮
+            Button(
+                onClick = onConfirm,
+                enabled = !isGenerating,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "生成",
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(if (isGenerating) "生成中..." else "生成设计方案")
+            }
+        }
+    }
+}
+
+/**
+ * 加载卡片
+ */
 
 /**
  * 加载卡片
@@ -423,86 +577,6 @@ fun StandardSelector(
                     }
                 )
             }
-        }
-    }
-}
-
-/**
- * 设计信息卡片
- */
-@Composable
-fun DesignInfoCard(
-    product: ProductType,
-    standard: String
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "设计信息",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = "产品：${product.typeName}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "标准：$standard",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-/**
- * 操作按钮
- */
-@Composable
-fun ActionButtons(
-    isGenerating: Boolean,
-    showResultCard: Boolean,
-    onGenerateDesign: () -> Unit,
-    onViewHistory: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // 生成按钮
-        Button(
-            onClick = onGenerateDesign,
-            enabled = !isGenerating,
-            modifier = Modifier.weight(1f)
-        ) {
-            Icon(
-                imageVector = Icons.Default.PlayArrow,
-                contentDescription = "生成",
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(if (isGenerating) "生成中..." else "生成设计方案")
-        }
-
-        // 历史按钮
-        OutlinedButton(
-            onClick = onViewHistory,
-            modifier = Modifier.weight(1f)
-        ) {
-            Icon(
-                imageVector = Icons.Default.List,
-                contentDescription = "历史",
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("查看历史")
         }
     }
 }
