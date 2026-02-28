@@ -59,8 +59,9 @@ class MainActivity : ComponentActivity() {
                             val designResult by designVM.designResult.collectAsState()
 
                             if (designResult != null) {
+                                val result = designResult!!
                                 DesignResultScreen(
-                                    result = designResult,
+                                    result = result,
                                     onBack = {
                                         try {
                                             navController.navigateUp()
