@@ -4,15 +4,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.collectAsState
 import com.design.assistant.ui.screens.home.HomeScreen
 import com.design.assistant.ui.screens.result.DesignResultScreen
 import com.design.assistant.ui.theme.DesignAssistantTheme
@@ -68,12 +72,12 @@ class MainActivity : ComponentActivity() {
                                 )
                             } else {
                                 // 如果没有设计结果，显示加载或错误页面
-                                androidx.compose.material3.Text(
+                                Text(
                                     text = "未找到设计方案",
-                                    modifier = androidx.compose.ui.Modifier
+                                    modifier = Modifier
                                         .fillMaxSize()
                                         .padding(16.dp),
-                                    style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
                             }
                         }
