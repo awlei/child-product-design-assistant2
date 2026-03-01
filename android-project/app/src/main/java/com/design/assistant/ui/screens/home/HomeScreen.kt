@@ -415,7 +415,7 @@ fun LoadingCard() {
 }
 
 /**
- * 结果卡片
+ * 结果卡片（复用 DesignResultScreen 的展示逻辑）
  */
 @Composable
 fun ResultCard(
@@ -425,14 +425,15 @@ fun ResultCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // 标题
             Row(
@@ -441,7 +442,7 @@ fun ResultCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "设计方案已生成",
+                    text = "📦 ${result.productName}设计方案",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -453,50 +454,130 @@ fun ResultCard(
                 }
             }
 
-            Divider()
-
-            // 基本信息
-            Text(
-                text = "产品：${result.productName}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "标准：${result.standardName}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "假人类型：${result.basicAdaptationData.dummyInfo.dummyType}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Divider()
-
-            // 详细信息
-            Text(
-                text = "设计参数：",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = "头枕高度：${result.designParameters.headrestHeight}",
-                style = MaterialTheme.typography.bodySmall
-            )
-            Text(
-                text = "座椅宽度：${result.designParameters.seatWidth}",
-                style = MaterialTheme.typography.bodySmall
-            )
-            Text(
-                text = "包装尺寸：${result.designParameters.envelope.length} × ${result.designParameters.envelope.width} × ${result.designParameters.envelope.height}",
-                style = MaterialTheme.typography.bodySmall
-            )
-
-            // 查看详情按钮
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = { /* TODO: 导航到详情页 */ },
-                modifier = Modifier.fillMaxWidth()
+            // 适用标准标签（醒目蓝色）
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(8.dp)
             ) {
-                Text("查看完整详情")
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "【适用标准】",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Text(
+                        text = result.standardName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                    )
+                    Text(
+                        text = result.applicableStandards.standardCode,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                    )
+                }
+            }
+
+            // 基础适配数据
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "📊 基础适配数据",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Row(
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Text(
+                            text = "🔽 假人",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Column(
+                        modifier = Modifier.padding(start = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Text(
+                            text = "  • 类型：${result.basicAdaptationData.dummyInfo.dummyType}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "  • 身高：${result.basicAdaptationData.dummyInfo.heightRange}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "  • 体重：${result.basicAdaptationData.dummyInfo.weightRange}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "  • 安装：${result.basicAdaptationData.dummyInfo.installationDirection}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // 设计参数摘要
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "📏 设计参数（摘要）",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Column(
+                        modifier = Modifier.padding(start = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Text(
+                            text = "  • 头枕高度：${result.designParameters.headrestHeight}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "  • 座椅宽度：${result.designParameters.seatWidth}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "  • Envelope：${result.designParameters.envelope.sizeClass}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
         }
     }

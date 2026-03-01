@@ -262,17 +262,52 @@ fun DesignParametersSection(params: com.design.assistant.model.DesignParameters)
         InfoRow("头枕高度", params.headrestHeight)
         InfoRow("座宽", params.seatWidth)
 
-        // Envelope 信息
-        TreeNode(
-            icon = "📦",
-            title = "盒子 Envelope"
+        // Envelope 信息（醒目展示）
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            ),
+            shape = RoundedCornerShape(8.dp)
         ) {
-            InfoRow("尺寸等级", params.envelope.sizeClass)
-            InfoRow("长度", params.envelope.length)
-            InfoRow("宽度", params.envelope.width)
-            InfoRow("高度", params.envelope.height)
-            if (params.envelope.description != null) {
-                InfoRow("描述", params.envelope.description)
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = "📦 盒子 Envelope",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Divider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+                // 尺寸等级醒目展示
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "尺寸等级：",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = params.envelope.sizeClass,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                InfoRow("长度", params.envelope.length)
+                InfoRow("宽度", params.envelope.width)
+                InfoRow("高度", params.envelope.height)
+                if (params.envelope.description != null) {
+                    InfoRow("描述", params.envelope.description)
+                }
             }
         }
 
@@ -359,19 +394,69 @@ fun TestRequirementItem(requirement: com.design.assistant.model.HarnessStrengthR
 }
 
 /**
- * 标准测试项区块
+ * 标准测试项区块（按碰撞类型分类）
  */
 @Composable
 fun StandardTestItemsSection(items: com.design.assistant.model.StandardTestItems) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items.dynamicTests.forEach { test ->
+        // 按碰撞类型分组
+        val frontalTests = items.dynamicTests.filter {
+            it.testType == com.design.assistant.model.DynamicTestType.FRONTAL_IMPACT
+        }
+        val rearTests = items.dynamicTests.filter {
+            it.testType == com.design.assistant.model.DynamicTestType.REAR_IMPACT
+        }
+        val sideTests = items.dynamicTests.filter {
+            it.testType == com.design.assistant.model.DynamicTestType.SIDE_IMPACT
+        }
+
+        // 正碰测试
+        if (frontalTests.isNotEmpty()) {
             TreeNode(
-                icon = if (test.isMandatory) Icons.Default.CheckCircle else "📋",
-                title = "${test.testName}${if (test.isMandatory) " (强制性)" else ""}"
+                icon = "🚗",
+                title = "动态碰撞：正碰 (${frontalTests.size}项)"
             ) {
-                TestDetailItem(test)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    frontalTests.forEach { test ->
+                        TestDetailItem(test)
+                    }
+                }
+            }
+        }
+
+        // 后碰测试
+        if (rearTests.isNotEmpty()) {
+            TreeNode(
+                icon = "🔄",
+                title = "动态碰撞：后碰 (${rearTests.size}项)"
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rearTests.forEach { test ->
+                        TestDetailItem(test)
+                    }
+                }
+            }
+        }
+
+        // 侧碰测试
+        if (sideTests.isNotEmpty()) {
+            TreeNode(
+                icon = "🔳",
+                title = "动态碰撞：侧碰 (${sideTests.size}项)"
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    sideTests.forEach { test ->
+                        TestDetailItem(test)
+                    }
+                }
             }
         }
     }
@@ -382,14 +467,65 @@ fun StandardTestItemsSection(items: com.design.assistant.model.StandardTestItems
  */
 @Composable
 fun TestDetailItem(test: com.design.assistant.model.DynamicTestItem) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier.padding(start = 8.dp)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (test.isMandatory) {
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            }
+        ),
+        shape = RoundedCornerShape(8.dp),
+        border = if (test.isMandatory) {
+            androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
+            )
+        } else {
+            null
+        }
     ) {
-        InfoRow("测试ID", test.testId)
-        InfoRow("测试描述", test.testDescription)
-        InfoRow("测试条件", test.testConditions)
-        InfoRow("验收标准", test.acceptanceCriteria)
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            // 测试名称 + 强制性标记
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = test.testName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (test.isMandatory) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.error,
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = "强制性",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onError,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+            Divider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+            InfoRow("测试ID", test.testId)
+            InfoRow("测试描述", test.testDescription)
+            InfoRow("测试条件", test.testConditions)
+            InfoRow("验收标准", test.acceptanceCriteria)
+        }
     }
 }
 
