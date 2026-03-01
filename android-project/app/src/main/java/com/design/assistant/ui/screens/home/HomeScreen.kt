@@ -6,8 +6,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +18,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import android.util.Log
 import com.design.assistant.constants.StandardConstants
 import com.design.assistant.model.DesignResult
@@ -40,6 +43,9 @@ fun HomeScreen(
     inputVM: InputParametersVM,
     designVM: com.design.assistant.viewmodel.DesignGenerateVM
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
     // UI 状态
     var selectedProduct by remember { mutableStateOf<ProductType>(ProductType.CHILD_SEAT) }
     var selectedStandard by remember { mutableStateOf<String>(StandardConstants.ECE_R129) }
@@ -47,6 +53,12 @@ fun HomeScreen(
     var errorMessage by remember { mutableStateOf("") }
     var showResultCard by remember { mutableStateOf(false) }
     var isQuickSuggestionMode by remember { mutableStateOf(false) }
+    var showHistoryDialog by remember { mutableStateOf(false) }
+    var showCalculationExplanation by remember { mutableStateOf(false) }
+    var showStandardReferences by remember { mutableStateOf(false) }
+
+    // 历史记录
+    var designHistory by remember { mutableStateOf<MutableList<DesignResult>>(mutableListOf()) }
 
     // 输入参数状态
     var minWeight by remember { mutableStateOf("") }
@@ -72,12 +84,77 @@ fun HomeScreen(
                 // 生成成功，显示结果
                 Log.d(TAG, "生成成功，显示结果")
                 showResultCard = true
+
+                // 添加到历史记录（最多保存 10 条）
+                designHistory.add(0, designResult!!)
+                if (designHistory.size > 10) {
+                    designHistory.removeAt(designHistory.size - 1)
+                }
             } else if (generateError != null) {
                 // 生成失败，显示错误
                 Log.e(TAG, "生成失败: $generateError")
                 errorMessage = generateError ?: "未知错误"
                 showErrorDialog = true
             }
+        }
+    }
+
+    // 复制数据到剪贴板
+    fun copyToClipboard(text: String, label: String) {
+        val clipData = android.content.ClipData.newPlainText(label, text)
+        clipboardManager.setPrimaryClip(clipData)
+        Toast.makeText(context, "已复制: $label", Toast.LENGTH_SHORT).show()
+    }
+
+    // 复制完整设计方案
+    fun copyFullDesignResult(result: DesignResult) {
+        val sb = StringBuilder()
+        sb.append("【${result.productName}设计方案】\n")
+        sb.append("适用标准：${result.standardName} (${result.applicableStandards.standardCode})\n\n")
+        sb.append("【基础适配数据】\n")
+        sb.append("假人类型：${result.basicAdaptationData.dummyInfo.dummyType}\n")
+        sb.append("身高范围：${result.basicAdaptationData.dummyInfo.heightRange}\n")
+        sb.append("体重范围：${result.basicAdaptationData.dummyInfo.weightRange}\n")
+        sb.append("安装方向：${result.basicAdaptationData.dummyInfo.installationDirection}\n\n")
+        sb.append("【设计参数】\n")
+        sb.append("头枕高度：${result.designParameters.headrestHeight}\n")
+        sb.append("座椅宽度：${result.designParameters.seatWidth}\n")
+        sb.append("Envelope 尺寸：${result.designParameters.envelope.length} × ${result.designParameters.envelope.width} × ${result.designParameters.envelope.height}\n")
+        sb.append("侧防面积：${result.designParameters.sideImpactArea}\n\n")
+        sb.append("【测试要求】\n")
+        sb.append("正面碰撞：${result.testRequirements.frontalImpact.speed}, ${result.testRequirements.frontalImpact.deceleration}\n")
+        sb.append("侧撞测试：${result.testRequirements.sideImpactChestCompression.impactSpeed}, 最大压缩${result.testRequirements.sideImpactChestCompression.maxChestCompression}\n")
+        sb.append("织带强度：${result.testRequirements.harnessStrength.testLoad}, ${result.testRequirements.harnessStrength.duration}\n")
+
+        copyToClipboard(sb.toString(), "完整设计方案")
+    }
+
+    // 获取标准条款引用
+    fun getStandardClauses(standard: String): List<String> {
+        return when {
+            standard.contains("ECE R129") -> listOf(
+                "Annex 18 - ISOFIX 下拉装置尺寸要求",
+                "Annex 19 - 假人规格（Q0, Q1, Q1.5, Q3, Q6, Q10）",
+                "Annex 20 - 动态测试要求",
+                "Regulation No.129 - 通用要求"
+            )
+            standard.contains("FMVSS 213") -> listOf(
+                "S5 - 假人要求",
+                "S7 - 动态测试程序",
+                "S10 - 织带强度测试",
+                "S18 - 安装说明要求"
+            )
+            standard.contains("GB 27887") -> listOf(
+                "4.3 - 产品分类",
+                "5.2 - 动态测试要求",
+                "6.1 - 结构强度要求",
+                "附录A - 假人规格"
+            )
+            else -> listOf(
+                "标准通用要求条款",
+                "测试方法条款",
+                "安全性能条款"
+            )
         }
     }
 
@@ -287,15 +364,53 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "儿童产品设计助手",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Column {
+                        Text(
+                            text = "儿童产品设计助手",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "专业工程师版",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                        )
+                    }
+                },
+                actions = {
+                    // 计算说明按钮
+                    IconButton(onClick = { showCalculationExplanation = true }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Calculate,
+                            contentDescription = "计算说明"
+                        )
+                    }
+                    // 标准引用按钮
+                    IconButton(onClick = { showStandardReferences = true }) {
+                        Icon(
+                            imageVector = Icons.Outlined.MenuBook,
+                            contentDescription = "标准引用"
+                        )
+                    }
+                    // 历史记录按钮
+                    IconButton(onClick = { showHistoryDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Outlined.History,
+                            contentDescription = "历史记录"
+                        )
+                    }
+                    // 关于按钮
+                    IconButton(onClick = { /* TODO: 显示关于信息 */ }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = "关于"
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -803,6 +918,57 @@ fun ResultCard(
                 }
             }
 
+            // 专业操作按钮区域
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // 查看详细参数按钮
+                OutlinedButton(
+                    onClick = { /* TODO: 跳转到详细结果页面 */ },
+                    modifier = Modifier.weight(1f),
+                    enabled = true
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Visibility,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("查看详情", fontSize = 12.sp)
+                }
+
+                // 复制数据按钮
+                OutlinedButton(
+                    onClick = { /* TODO: 复制到剪贴板 */ },
+                    modifier = Modifier.weight(1f),
+                    enabled = true
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.ContentCopy,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("复制数据", fontSize = 12.sp)
+                }
+
+                // 分享按钮
+                OutlinedButton(
+                    onClick = { /* TODO: 分享设计方案 */ },
+                    modifier = Modifier.weight(1f),
+                    enabled = true
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Share,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("分享", fontSize = 12.sp)
+                }
+            }
+
             // 设计建议模式提示
             if (isQuickSuggestion) {
                 Card(
@@ -885,6 +1051,306 @@ fun ProductSelector(
                     }
                 )
             }
+        }
+    }
+}
+
+/**
+ * 计算说明对话框
+ */
+@Composable
+fun CalculationExplanationDialog(
+    visible: Boolean,
+    onDismiss: () -> Unit
+) {
+    if (!visible) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("参数计算说明")
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "本应用基于以下方法计算设计参数：",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Divider()
+                CalculationItem(
+                    title = "Envelope 尺寸",
+                    description = "根据假人身高范围，加上安全余量计算得出。包括长度（带保护罩）、宽度（含肩宽）、高度（含头枕）三个维度。"
+                )
+                CalculationItem(
+                    title = "头枕高度调节范围",
+                    description = "基于假人身高范围和标准要求的头部保护区域计算，确保头枕能够覆盖假人头部位置。"
+                )
+                CalculationItem(
+                    title = "侧防面积",
+                    description = "根据侧撞测试要求的胸部压缩量和假人肩宽计算，确保侧防装置能够提供足够的保护。"
+                )
+                CalculationItem(
+                    title = "织带强度测试载荷",
+                    description = "基于标准要求的动态测试减速曲线和假人重量计算，确保织带能够承受测试载荷。"
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("我知道了")
+            }
+        }
+    )
+}
+
+/**
+ * 单项计算说明
+ */
+@Composable
+fun CalculationItem(
+    title: String,
+    description: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+/**
+ * 标准引用对话框
+ */
+@Composable
+fun StandardReferencesDialog(
+    visible: Boolean,
+    onDismiss: () -> Unit
+) {
+    if (!visible) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("标准条款引用")
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "各标准体系的关键条款：",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Divider()
+
+                StandardReferenceSection(
+                    standardName = "ECE R129 (i-Size)",
+                    clauses = listOf(
+                        "Annex 18 - ISOFIX 下拉装置尺寸要求",
+                        "Annex 19 - 假人规格（Q0, Q1, Q1.5, Q3, Q6, Q10）",
+                        "Annex 20 - 动态测试要求",
+                        "Regulation No.129 - 通用要求"
+                    )
+                )
+
+                StandardReferenceSection(
+                    standardName = "FMVSS 213 (美国)",
+                    clauses = listOf(
+                        "S5 - 假人要求",
+                        "S7 - 动态测试程序",
+                        "S10 - 织带强度测试",
+                        "S18 - 安装说明要求"
+                    )
+                )
+
+                StandardReferenceSection(
+                    standardName = "GB 27887-2024 (中国)",
+                    clauses = listOf(
+                        "4.3 - 产品分类",
+                        "5.2 - 动态测试要求",
+                        "6.1 - 结构强度要求",
+                        "附录A - 假人规格"
+                    )
+                )
+
+                StandardReferenceSection(
+                    standardName = "AS/NZS 1754 (澳大利亚/新西兰)",
+                    clauses = listOf(
+                        "Clause 2.1 - 产品分类",
+                        "Clause 4.2 - 动态测试程序",
+                        "Clause 5.1 - 织带强度要求",
+                        "Annex AA - 假人规格"
+                    )
+                )
+
+                StandardReferenceSection(
+                    standardName = "CMVSS 213 (加拿大)",
+                    clauses = listOf(
+                        "S5 - 假人要求",
+                        "S7 - 动态测试程序",
+                        "S10 - 织带强度测试",
+                        "S18 - 安装说明要求"
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("我知道了")
+            }
+        }
+    )
+}
+
+/**
+ * 标准引用章节
+ */
+@Composable
+fun StandardReferenceSection(
+    standardName: String,
+    clauses: List<String>
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = standardName,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            clauses.forEach { clause ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "• ",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        text = clause,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 历史记录对话框
+ */
+@Composable
+fun HistoryDialog(
+    visible: Boolean,
+    history: List<DesignResult>,
+    onDismiss: () -> Unit,
+    onHistoryItemClicked: (DesignResult) -> Unit
+) {
+    if (!visible) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("历史记录")
+        },
+        text = {
+            if (history.isEmpty()) {
+                Text(
+                    text = "暂无历史记录",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(history) { result ->
+                        HistoryItemCard(
+                            result = result,
+                            onClick = {
+                                onHistoryItemClicked(result)
+                            }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("关闭")
+            }
+        }
+    )
+}
+
+/**
+ * 历史记录项卡片
+ */
+@Composable
+fun HistoryItemCard(
+    result: DesignResult,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = result.productName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = result.standardName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            Text(
+                text = "${result.basicAdaptationData.dummyInfo.dummyType} • ${result.designParameters.envelope.sizeClass}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
