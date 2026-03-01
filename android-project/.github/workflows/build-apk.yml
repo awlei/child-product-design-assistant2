@@ -30,9 +30,8 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-v3-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties', '**/build.gradle.kts') }}
+          key: ${{ runner.os }}-gradle-v4-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties', '**/build.gradle.kts') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-v3-
 
       - name: Clean project
         run: ./gradlew clean --no-daemon
