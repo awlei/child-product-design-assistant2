@@ -22,7 +22,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Grant execute permission for gradlew
-        run: chmod +x android-project/gradlew
+        run: chmod +x gradlew
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -30,49 +30,40 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-v2-${{ hashFiles('android-project/**/*.gradle*', 'android-project/**/gradle-wrapper.properties', 'android-project/gradle.properties') }}
+          key: ${{ runner.os }}-gradle-v5-${{ hashFiles('android-project/**/*.gradle*', 'android-project/**/gradle-wrapper.properties', 'android-project/gradle.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-v2-
 
-      - name: Generate Test Keystore (if no real keystore provided)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          cd android-project
-          chmod +x gen-test-keystore.sh
-          ./gen-test-keystore.sh
-
-      - name: Clean build cache
-        run: cd android-project && ./gradlew clean --no-daemon
-
-      - name: Remove configuration cache
-        run: cd android-project && rm -rf .gradle/configuration-cache .configuration-cache app/.gradle
+      - name: Clean project
+        run: ./gradlew clean --no-daemon
 
       - name: Stop Gradle daemon
-        run: cd android-project && ./gradlew --stop
+        run: ./gradlew --stop
+
+      - name: Remove local Gradle cache
+        run: rm -rf .gradle/configuration-cache .configuration-cache app/.gradle
+
+      - name: Decode Keystore
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release-keystore.jks
 
       - name: Build Debug APK
-        run: cd android-project && ./gradlew assembleDebug --stacktrace --no-daemon
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Build Release APK
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          cd android-project
-          export KEYSTORE_FILE=$PWD/app/release-keystore.jks
-          export KEYSTORE_PASSWORD=test123456
-          export KEY_ALIAS=test-key
-          export KEY_PASSWORD=test123456
-          ./gradlew assembleRelease --stacktrace
         env:
-          KEYSTORE_FILE: ./android-project/app/release-keystore.jks
-          KEYSTORE_PASSWORD: test123456
-          KEY_ALIAS: test-key
-          KEY_PASSWORD: test123456
+          KEYSTORE_FILE: release-keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --stacktrace
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: android-project/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
 
       - name: Upload Release APK
@@ -80,13 +71,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: android-project/app/build/outputs/apk/release/app-release.apk
+          path: app/build/outputs/apk/release/app-release.apk
           retention-days: 30
 
       - name: Create Release (tag only)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: android-project/app/build/outputs/apk/release/app-release.apk
+          files: app/build/outputs/apk/release/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
