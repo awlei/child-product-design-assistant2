@@ -2,6 +2,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp") version "1.9.20-1.0.14"
+    // 显式禁用 kapt 插件（如果存在）
+    // id("org.jetbrains.kotlin.kapt") apply false
 }
 
 android {
@@ -85,6 +87,11 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    // 禁用 KAPT 任务生成
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KaptTask>().configureEach {
+        enabled = false
     }
 
     buildFeatures {
