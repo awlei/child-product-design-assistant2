@@ -30,8 +30,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-v5-${{ hashFiles('android-project/**/*.gradle*', 'android-project/**/gradle-wrapper.properties', 'android-project/gradle.properties') }}
-          restore-keys: |
+          key: ${{ runner.os }}-gradle-v6-${{ hashFiles('android-project/**/*.gradle*', 'android-project/**/gradle-wrapper.properties', 'android-project/gradle.properties') }}-${{ github.run_number }}
 
       - name: Clean project
         run: cd android-project && ./gradlew clean --no-daemon
