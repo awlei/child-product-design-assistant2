@@ -2,9 +2,10 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp") version "1.9.20-1.0.14"
-    // 显式禁用 kapt 插件（如果存在）
-    // id("org.jetbrains.kotlin.kapt") apply false
 }
+
+import java.util.Properties
+import java.io.FileInputStream
 
 android {
     namespace = "com.design.assistant"
@@ -42,8 +43,8 @@ android {
                 val keystorePropertiesFile = project.layout.projectDirectory.file("keystore.properties").asFile
 
                 if (keystorePropertiesFile.exists()) {
-                    val keystoreProperties = java.util.Properties()
-                    keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+                    val keystoreProperties = Properties()
+                    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 
                     val storeFilePath = keystoreProperties["storeFile"] as String
                     storeFile = if (storeFilePath.startsWith("/")) {
@@ -89,12 +90,7 @@ android {
         jvmTarget = "17"
     }
 
-    // 禁用 KAPT 任务生成（方法1：通过任务类型）
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KaptTask>().configureEach {
-        enabled = false
-    }
-
-    // 禁用 KAPT 任务生成（方法2：通过任务名称，更强制）
+    // 禁用 KAPT 任务生成（通过任务名称，因为 KAPT 插件已被移除）
     afterEvaluate {
         tasks.matching { it.name.contains("kapt", ignoreCase = true) }.configureEach {
             enabled = false
