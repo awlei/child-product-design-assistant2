@@ -491,6 +491,12 @@ fun HomeScreen(
                 isGenerating = isGenerating
             )
 
+            // 参数建议卡片
+            ParameterSuggestionCard(
+                standard = selectedStandard,
+                productType = selectedProduct
+            )
+
             // 加载状态
             if (isGenerating) {
                 LoadingCard()
@@ -542,7 +548,7 @@ fun HomeScreen(
 
 /**
  * 输入参数表单
- * 根据标准体系显示不同的输入字段
+ * 优化后的参数输入界面，支持灵活的身高和体重输入
  */
 @Composable
 fun InputParametersForm(
@@ -558,116 +564,211 @@ fun InputParametersForm(
     onConfirm: () -> Unit,
     isGenerating: Boolean
 ) {
-    val needHeight = standard.contains("ECE R129") || standard.contains("GB") || standard.contains("AS/NZS")
-    val needWeight = standard.contains("FMVSS") || standard.contains("CMVSS") || standard.contains("GB") || standard.contains("AS/NZS")
+    // 根据标准体系确定哪些字段是必需的
+    val heightRequired = standard.contains("ECE R129") || standard.contains("GB") || standard.contains("AS/NZS")
+    val weightRequired = standard.contains("FMVSS") || standard.contains("CMVSS") || standard.contains("GB") || standard.contains("AS/NZS")
+    
+    // 计算字段的有效性
+    val heightValid = minHeight.isNotEmpty() && maxHeight.isNotEmpty() && 
+                      minHeight.toIntOrNull() != null && maxHeight.toIntOrNull() != null &&
+                      minHeight.toIntOrNull()!! < maxHeight.toIntOrNull()!!
+    
+    val weightValid = minWeight.isNotEmpty() && maxWeight.isNotEmpty() && 
+                      minWeight.toDoubleOrNull() != null && maxWeight.toDoubleOrNull() != null &&
+                      minWeight.toDoubleOrNull()!! < maxWeight.toDoubleOrNull()!!
+    
+    // 验证是否可以提交
+    val canSubmit = if (heightRequired && weightRequired) {
+        heightValid && weightValid
+    } else if (heightRequired) {
+        heightValid
+    } else if (weightRequired) {
+        weightValid
+    } else {
+        heightValid || weightValid
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 标题
-            Text(
-                text = "输入参数",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Divider()
-
-            // 身高输入
-            if (needHeight) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "身高范围 (cm)",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = minHeight,
-                            onValueChange = onMinHeightChange,
-                            label = { Text("最小身高") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                            )
-                        )
-                        OutlinedTextField(
-                            value = maxHeight,
-                            onValueChange = onMaxHeightChange,
-                            label = { Text("最大身高") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                            )
-                        )
-                    }
-                }
-                Divider()
+            // 标题和说明
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "输入参数",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "根据 $standard 标准要求，请输入以下参数",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
+            HorizontalDivider()
+
+            // 身高输入
+            ParameterInputGroup(
+                title = "身高范围",
+                subtitle = if (heightRequired) "必填" else "选填",
+                unit = "cm",
+                minValue = minHeight,
+                maxValue = maxHeight,
+                onMinValueChange = onMinHeightChange,
+                onMaxValueChange = onMaxHeightChange,
+                isRequired = heightRequired,
+                isValid = if (minHeight.isNotEmpty() && maxHeight.isNotEmpty()) heightValid else true,
+                keyboardType = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                ),
+                errorMessage = if (minHeight.isNotEmpty() && maxHeight.isNotEmpty() && !heightValid) {
+                    "最小身高必须小于最大身高"
+                } else null
+            )
+
             // 体重输入
-            if (needWeight) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "体重范围 (kg)",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = minWeight,
-                            onValueChange = onMinWeightChange,
-                            label = { Text("最小体重") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
-                            )
-                        )
-                        OutlinedTextField(
-                            value = maxWeight,
-                            onValueChange = onMaxWeightChange,
-                            label = { Text("最大体重") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
-                            )
-                        )
-                    }
-                }
-                Divider()
+            ParameterInputGroup(
+                title = "体重范围",
+                subtitle = if (weightRequired) "必填" else "选填",
+                unit = "kg",
+                minValue = minWeight,
+                maxValue = maxWeight,
+                onMinValueChange = onMinWeightChange,
+                onMaxValueChange = onMaxWeightChange,
+                isRequired = weightRequired,
+                isValid = if (minWeight.isNotEmpty() && maxWeight.isNotEmpty()) weightValid else true,
+                keyboardType = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                ),
+                errorMessage = if (minWeight.isNotEmpty() && maxWeight.isNotEmpty() && !weightValid) {
+                    "最小体重必须小于最大体重"
+                } else null
+            )
+
+            HorizontalDivider()
+
+            // 提示信息
+            if (!canSubmit && (minHeight.isNotEmpty() || maxHeight.isNotEmpty() || minWeight.isNotEmpty() || maxWeight.isNotEmpty())) {
+                Text(
+                    text = "请填写所有必填字段，并确保最小值小于最大值",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
             }
 
             // 确认按钮
             Button(
                 onClick = onConfirm,
-                enabled = !isGenerating,
-                modifier = Modifier.fillMaxWidth()
+                enabled = canSubmit && !isGenerating,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "生成",
+                    imageVector = if (isGenerating) Icons.Default.Refresh else Icons.Default.PlayArrow,
+                    contentDescription = if (isGenerating) "生成中" else "生成",
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(if (isGenerating) "生成中..." else "生成设计方案")
             }
+        }
+    }
+}
+
+/**
+ * 参数输入组
+ * 优化的参数输入组件
+ */
+@Composable
+fun ParameterInputGroup(
+    title: String,
+    subtitle: String,
+    unit: String,
+    minValue: String,
+    maxValue: String,
+    onMinValueChange: (String) -> Unit,
+    onMaxValueChange: (String) -> Unit,
+    isRequired: Boolean,
+    isValid: Boolean,
+    keyboardType: androidx.compose.foundation.text.KeyboardOptions,
+    errorMessage: String?
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // 标题
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            // 必填标记
+            if (isRequired) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            } else {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        // 输入字段
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = minValue,
+                onValueChange = onMinValueChange,
+                label = { Text("最小值") },
+                placeholder = { Text("请输入最小$unit") },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                keyboardOptions = keyboardType,
+                isError = !isValid && minValue.isNotEmpty(),
+                supportingText = { Text("$unit") },
+                shape = RoundedCornerShape(8.dp)
+            )
+            OutlinedTextField(
+                value = maxValue,
+                onValueChange = onMaxValueChange,
+                label = { Text("最大值") },
+                placeholder = { Text("请输入最大$unit") },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                keyboardOptions = keyboardType,
+                isError = !isValid && maxValue.isNotEmpty(),
+                supportingText = { Text("$unit") },
+                shape = RoundedCornerShape(8.dp)
+            )
+        }
+
+        // 错误提示
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 4.dp)
+            )
         }
     }
 }
@@ -1403,6 +1504,264 @@ fun StandardSelector(
                     }
                 )
             }
+        }
+    }
+}
+
+/**
+ * 参数建议卡片
+ * 根据不同的标准和产品类型显示推荐的参数范围
+ */
+@Composable
+fun ParameterSuggestionCard(
+    standard: String,
+    productType: ProductType
+) {
+    val suggestions = getParameterSuggestions(standard, productType)
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // 标题
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = "参数建议",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "参数建议",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            // 建议内容
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                suggestions.forEach { suggestion ->
+                    SuggestionItem(
+                        icon = suggestion.icon,
+                        title = suggestion.title,
+                        content = suggestion.content
+                    )
+                }
+            }
+
+            // 提示
+            Text(
+                text = "💡 提示：点击「一键输出设计建议」按钮可自动填充推荐参数",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+/**
+ * 参数建议数据类
+ */
+data class ParameterSuggestion(
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val title: String,
+    val content: String
+)
+
+/**
+ * 获取参数建议
+ */
+fun getParameterSuggestions(standard: String, productType: ProductType): List<ParameterSuggestion> {
+    return when (productType) {
+        ProductType.CHILD_SEAT -> getChildSeatSuggestions(standard)
+        ProductType.BABY_STROLLER -> getBabyStrollerSuggestions(standard)
+        ProductType.HIGH_CHAIR -> getHighChairSuggestions(standard)
+        ProductType.CHILD_BED -> getChildBedSuggestions(standard)
+    }
+}
+
+/**
+ * 儿童安全座椅参数建议
+ */
+fun getChildSeatSuggestions(standard: String): List<ParameterSuggestion> {
+    return when {
+        standard.contains("ECE R129") -> listOf(
+            ParameterSuggestion(
+                icon = Icons.Outlined.Height,
+                title = "Q1 组（9-18个月）",
+                content = "身高 40-87cm，ISOFIX 安装方式"
+            ),
+            ParameterSuggestion(
+                icon = Icons.Outlined.Height,
+                title = "Q2 组（15个月-4岁）",
+                content = "身高 87-105cm，ISOFIX 或安全带安装"
+            ),
+            ParameterSuggestion(
+                icon = Icons.Outlined.Height,
+                title = "Q3 组（3.5-12岁）",
+                content = "身高 105-150cm，增高椅模式"
+            )
+        )
+        standard.contains("FMVSS") || standard.contains("CMVSS") -> listOf(
+            ParameterSuggestion(
+                icon = Icons.Outlined.Scale,
+                title = "1 组（9-18kg）",
+                content = "体重 9-18kg，后向或前向安装"
+            ),
+            ParameterSuggestion(
+                icon = Icons.Outlined.Scale,
+                title = "2 组（16-29kg）",
+                content = "体重 16-29kg，前向安装"
+            ),
+            ParameterSuggestion(
+                icon = Icons.Outlined.Scale,
+                title = "3 组（22-36kg）",
+                content = "体重 22-36kg，增高椅模式"
+            )
+        )
+        standard.contains("GB") -> listOf(
+            ParameterSuggestion(
+                icon = Icons.Outlined.Height,
+                title = "0 组（0-10kg）",
+                content = "新生儿专用，后向安装"
+            ),
+            ParameterSuggestion(
+                icon = Icons.Outlined.Height,
+                title = "0+ 组（0-13kg）",
+                content = "身高 40-65cm，后向安装"
+            ),
+            ParameterSuggestion(
+                icon = Icons.Outlined.Scale,
+                title = "I 组（9-18kg）",
+                content = "体重 9-18kg，身高 67-101cm"
+            )
+        )
+        else -> listOf(
+            ParameterSuggestion(
+                icon = Icons.Outlined.Info,
+                title = "通用建议",
+                content = "请参考产品说明书和当地法规要求"
+            )
+        )
+    }
+}
+
+/**
+ * 婴儿推车参数建议
+ */
+fun getBabyStrollerSuggestions(standard: String): List<ParameterSuggestion> {
+    return when {
+        standard.contains("EN 1888") || standard.contains("GB 14748") -> listOf(
+            ParameterSuggestion(
+                icon = Icons.Outlined.Height,
+                title = "新生儿模式",
+                content = "体重 0-9kg，完全平躺"
+            ),
+            ParameterSuggestion(
+                icon = Icons.Outlined.Scale,
+                title = "坐姿模式",
+                content = "体重 9-15kg，可调节角度"
+            )
+        )
+        else -> listOf(
+            ParameterSuggestion(
+                icon = Icons.Outlined.Scale,
+                title = "通用模式",
+                content = "体重 0-13.6kg（约 0-36个月）"
+            )
+        )
+    }
+}
+
+/**
+ * 儿童高脚椅参数建议
+ */
+fun getHighChairSuggestions(standard: String): List<ParameterSuggestion> {
+    return listOf(
+        ParameterSuggestion(
+            icon = Icons.Outlined.Scale,
+            title = "标准模式",
+            content = "体重 0-15kg，身高 70-95cm"
+        ),
+        ParameterSuggestion(
+            icon = Icons.Outlined.Info,
+            title = "使用建议",
+            content = "6个月以上，能够独立坐立时使用"
+        )
+    )
+}
+
+/**
+ * 儿童床参数建议
+ */
+fun getChildBedSuggestions(standard: String): List<ParameterSuggestion> {
+    return listOf(
+        ParameterSuggestion(
+            icon = Icons.Outlined.Scale,
+            title = "婴儿床模式",
+            content = "体重 0-15kg，身高 50-90cm"
+        ),
+        ParameterSuggestion(
+            icon = Icons.Outlined.Height,
+            title = "儿童床模式",
+            content = "体重 0-30kg，身高 50-140cm"
+        ),
+        ParameterSuggestion(
+            icon = Icons.Outlined.Info,
+            title = "使用建议",
+            content = "0-6岁使用，可根据身高调节床板高度"
+        )
+    )
+}
+
+/**
+ * 建议项组件
+ */
+@Composable
+fun SuggestionItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    content: String
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = title,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = content,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
