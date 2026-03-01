@@ -77,15 +77,15 @@ object StandardDatabase {
         val minHeight = (input.minHeight ?: 40).coerceAtLeast(40)
         val maxHeight = (input.maxHeight ?: 105).coerceAtLeast(minHeight + 10)
 
-        // 根据身高范围确定分组
+        // 根据身高范围确定分组（严格按照 ECE R129 Annex 19）
         val (group, dummyType) = when {
-            maxHeight <= 60 -> "Q0" to "Q0 假人（出生至 10 个月）"
-            maxHeight <= 76 -> "Q0+" to "Q0+ 假人（出生至 12 个月）"
-            maxHeight <= 87 -> "Q1" to "Q1 假人（9 个月至 18 个月）"
-            maxHeight <= 100 -> "Q1.5" to "Q1.5 假人（12 个月至 36 个月）"
-            maxHeight <= 125 -> "Q3" to "Q3 假人（3 岁至 6 岁）"
-            maxHeight <= 150 -> "Q6" to "Q6 假人（6 岁至 10 岁）"
-            else -> "Q10" to "Q10 假人（10 岁至 12 岁）"
+            maxHeight <= 60  -> "Q0"   to "Q0 假人（出生至 10 个月）"
+            maxHeight <= 76  -> "Q0+"  to "Q0+ 假人（出生至 12 个月）"
+            maxHeight <= 87  -> "Q1"   to "Q1 假人（9 个月至 18 个月）"
+            maxHeight <= 105 -> "Q1.5" to "Q1.5 假人（12 个月至 36 个月）"  // 修正：从 100 改为 105
+            maxHeight <= 125 -> "Q3"   to "Q3 假人（3 岁至 6 岁）"
+            maxHeight <= 150 -> "Q6"   to "Q6 假人（6 岁至 10 岁）"
+            else               -> "Q10"  to "Q10 假人（10 岁至 12 岁）"
         }
 
         val installationDirection = when {
@@ -115,7 +115,7 @@ object StandardDatabase {
                 dummyInfo = DummyInfo(
                     dummyType = dummyType,
                     heightRange = "${minHeight}cm - ${maxHeight}cm",
-                    weightRange = "根据身高转换：${(minHeight * 0.5).toInt()}kg - ${(maxHeight * 0.5).toInt()}kg",
+                    weightRange = getWeightRangeByDummyType(group),  // 修正：使用假人类型的精确体重范围
                     installationDirection = installationDirection,
                     ageGroup = getAgeGroupByHeight(maxHeight)
                 )
@@ -639,13 +639,13 @@ object StandardDatabase {
 
     private fun getAgeGroupByHeight(height: Int): String {
         return when {
-            height <= 60 -> "新生儿 - 10 个月"
-            height <= 76 -> "新生儿 - 12 个月"
-            height <= 87 -> "9 个月 - 18 个月"
-            height <= 100 -> "12 个月 - 36 个月"
+            height <= 60  -> "新生儿 - 10 个月"
+            height <= 76  -> "新生儿 - 12 个月"
+            height <= 87  -> "9 个月 - 18 个月"
+            height <= 105 -> "12 个月 - 36 个月"  // 修正：从 100 改为 105，与 Q1.5 分组阈值保持一致
             height <= 125 -> "3 岁 - 6 岁"
             height <= 150 -> "6 岁 - 10 岁"
-            else -> "10 岁 - 12 岁"
+            else            -> "10 岁 - 12 岁"
         }
     }
 
@@ -656,6 +656,35 @@ object StandardDatabase {
             weight <= 25.0 -> "4 岁 - 7 岁"
             weight <= 36.0 -> "7 岁 - 12 岁"
             else -> "10 岁 - 12 岁"
+        }
+    }
+
+    /**
+     * 根据假人分组获取精确的体重范围（严格按照 ECE R129 Annex 19）
+     * 避免使用简化的身高*0.5换算，提高准确性
+     */
+    private fun getWeightRangeByDummyType(group: String): String {
+        return when {
+            // Q0 和 Q0+ 假人：出生至约10-12个月
+            group.contains("Q0") -> "0-13kg"
+
+            // Q1 假人：9-18个月
+            group == "Q1" -> "9-18kg"
+
+            // Q1.5 假人：12-36个月
+            group == "Q1.5" -> "9-18kg"
+
+            // Q3 假人：3-6岁
+            group == "Q3" -> "15-25kg"
+
+            // Q6 假人：6-10岁
+            group == "Q6" -> "22-36kg"
+
+            // Q10 假人：10-12岁
+            group == "Q10" -> "31-52kg"
+
+            // 其他情况（FMVSS 213 等标准）
+            else -> "根据假人类型确定"
         }
     }
 
