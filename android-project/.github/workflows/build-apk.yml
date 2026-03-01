@@ -34,6 +34,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-v3-
 
+      - name: Clean project
+        run: ./gradlew clean --no-daemon
+
+      - name: Stop Gradle daemon
+        run: ./gradlew --stop
+
+      - name: Remove local Gradle cache
+        run: rm -rf .gradle/configuration-cache .configuration-cache app/.gradle
+
       - name: Decode Keystore
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
