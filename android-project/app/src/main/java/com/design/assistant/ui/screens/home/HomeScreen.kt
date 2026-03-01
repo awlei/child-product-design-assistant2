@@ -1,6 +1,7 @@
 package com.design.assistant.ui.screens.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -227,36 +228,8 @@ fun HomeScreen(
         }
     }
 
-    // 一键输出设计建议
-    fun onQuickDesignSuggestion() {
-        Log.d(TAG, "用户点击一键输出设计建议")
-
-        // 设置为设计建议模式
-        isQuickSuggestionMode = true
-
-        // 根据产品和标准生成最佳实践参数
-        val bestPracticeParams = when (selectedProduct) {
-            ProductType.CHILD_SEAT -> generateBestPracticeChildSeatParams(selectedStandard)
-            ProductType.BABY_STROLLER -> generateBestPracticeBabyStrollerParams(selectedStandard)
-            ProductType.HIGH_CHAIR -> generateBestPracticeHighChairParams(selectedStandard)
-            ProductType.CHILD_BED -> generateBestPracticeChildBedParams(selectedStandard)
-        }
-
-        Log.d(TAG, "最佳实践参数: $bestPracticeParams")
-
-        // 清除之前的结果
-        designVM.clearResult()
-        showResultCard = false
-
-        // 生成设计方案
-        inputVM.setInputParameters(bestPracticeParams)
-        designVM.generateDesign(
-            productType = selectedProduct,
-            standardSystem = selectedStandard,
-            inputParameters = bestPracticeParams
-        )
-    }
-
+    // ============ 最佳实践参数生成函数 ============
+    
     // 生成儿童安全座椅最佳实践参数
     fun generateBestPracticeChildSeatParams(standard: String): InputParameters {
         return when {
@@ -361,6 +334,38 @@ fun HomeScreen(
             maxWeight = 30.0,
             ageRange = "0-6岁",
             vehicleType = "家庭卧室"
+        )
+    }
+
+    // ============ 事件处理函数 ============
+
+    // 一键输出设计建议
+    fun onQuickDesignSuggestion() {
+        Log.d(TAG, "用户点击一键输出设计建议")
+
+        // 设置为设计建议模式
+        isQuickSuggestionMode = true
+
+        // 根据产品和标准生成最佳实践参数
+        val bestPracticeParams = when (selectedProduct) {
+            ProductType.CHILD_SEAT -> generateBestPracticeChildSeatParams(selectedStandard)
+            ProductType.BABY_STROLLER -> generateBestPracticeBabyStrollerParams(selectedStandard)
+            ProductType.HIGH_CHAIR -> generateBestPracticeHighChairParams(selectedStandard)
+            ProductType.CHILD_BED -> generateBestPracticeChildBedParams(selectedStandard)
+        }
+
+        Log.d(TAG, "最佳实践参数: $bestPracticeParams")
+
+        // 清除之前的结果
+        designVM.clearResult()
+        showResultCard = false
+
+        // 生成设计方案
+        inputVM.setInputParameters(bestPracticeParams)
+        designVM.generateDesign(
+            productType = selectedProduct,
+            standardSystem = selectedStandard,
+            inputParameters = bestPracticeParams
         )
     }
 
