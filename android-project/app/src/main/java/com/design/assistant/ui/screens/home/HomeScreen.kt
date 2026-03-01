@@ -46,6 +46,7 @@ fun HomeScreen(
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var showResultCard by remember { mutableStateOf(false) }
+    var isQuickSuggestionMode by remember { mutableStateOf(false) }
 
     // 输入参数状态
     var minWeight by remember { mutableStateOf("") }
@@ -83,6 +84,9 @@ fun HomeScreen(
     // 确认生成
     fun onConfirmGenerate() {
         Log.d(TAG, "用户确认输入参数")
+
+        // 设置为自定义参数模式
+        isQuickSuggestionMode = false
 
         // 根据标准体系创建参数
         val params = when {
@@ -142,6 +146,143 @@ fun HomeScreen(
         }
     }
 
+    // 一键输出设计建议
+    fun onQuickDesignSuggestion() {
+        Log.d(TAG, "用户点击一键输出设计建议")
+
+        // 设置为设计建议模式
+        isQuickSuggestionMode = true
+
+        // 根据产品和标准生成最佳实践参数
+        val bestPracticeParams = when (selectedProduct) {
+            ProductType.CHILD_SEAT -> generateBestPracticeChildSeatParams(selectedStandard)
+            ProductType.BABY_STROLLER -> generateBestPracticeBabyStrollerParams(selectedStandard)
+            ProductType.HIGH_CHAIR -> generateBestPracticeHighChairParams(selectedStandard)
+            ProductType.CHILD_BED -> generateBestPracticeChildBedParams(selectedStandard)
+        }
+
+        Log.d(TAG, "最佳实践参数: $bestPracticeParams")
+
+        // 清除之前的结果
+        designVM.clearResult()
+        showResultCard = false
+
+        // 生成设计方案
+        inputVM.setInputParameters(bestPracticeParams)
+        designVM.generateDesign(
+            productType = selectedProduct,
+            standardSystem = selectedStandard,
+            inputParameters = bestPracticeParams
+        )
+    }
+
+    // 生成儿童安全座椅最佳实践参数
+    private fun generateBestPracticeChildSeatParams(standard: String): InputParameters {
+        return when {
+            standard.contains("ECE R129") -> {
+                // ECE R129 推荐使用最常用的 Q1 组（9-18个月）
+                InputParameters(
+                    productType = selectedProduct,
+                    standardSystem = standard,
+                    minHeight = 40,
+                    maxHeight = 87,
+                    minWeight = null,
+                    maxWeight = null,
+                    ageRange = "9-18个月",
+                    seatInstallationType = "ISOFIX",
+                    vehicleType = "轿车/SUV"
+                )
+            }
+            standard.contains("FMVSS") || standard.contains("CMVSS") -> {
+                // FMVSS 213 推荐最常用的 1 组（9-18kg）
+                InputParameters(
+                    productType = selectedProduct,
+                    standardSystem = standard,
+                    minHeight = null,
+                    maxHeight = null,
+                    minWeight = 9.0,
+                    maxWeight = 18.0,
+                    ageRange = "9-36个月",
+                    seatInstallationType = "LATCH/ISOFIX",
+                    vehicleType = "轿车/SUV"
+                )
+            }
+            else -> {
+                // GB 标准
+                InputParameters(
+                    productType = selectedProduct,
+                    standardSystem = standard,
+                    minHeight = 40,
+                    maxHeight = 105,
+                    minWeight = 0.0,
+                    maxWeight = 18.0,
+                    ageRange = "0-4岁",
+                    seatInstallationType = "ISOFIX + 安全带",
+                    vehicleType = "通用"
+                )
+            }
+        }
+    }
+
+    // 生成婴儿推车最佳实践参数
+    private fun generateBestPracticeBabyStrollerParams(standard: String): InputParameters {
+        return when {
+            standard.contains("EN 1888") || standard.contains("GB 14748") -> {
+                InputParameters(
+                    productType = selectedProduct,
+                    standardSystem = standard,
+                    minHeight = 45,
+                    maxHeight = 100,
+                    minWeight = 0.0,
+                    maxWeight = 15.0,
+                    ageRange = "0-3岁",
+                    vehicleType = "适用于 1-3 名儿童"
+                )
+            }
+            else -> {
+                InputParameters(
+                    productType = selectedProduct,
+                    standardSystem = standard,
+                    minHeight = 50,
+                    maxHeight = 100,
+                    minWeight = 0.0,
+                    maxWeight = 13.6,
+                    ageRange = "0-36个月",
+                    vehicleType = "双座推车"
+                )
+            }
+        }
+    }
+
+    // 生成儿童高脚椅最佳实践参数
+    private fun generateBestPracticeHighChairParams(standard: String): InputParameters {
+        return InputParameters(
+            productType = selectedProduct,
+            standardSystem = standard,
+            minHeight = 70,
+            maxHeight = 95,
+            minWeight = 0.0,
+            maxWeight = 15.0,
+            ageRange = "6-36个月",
+            seatInstallationType = "独立式/附着式",
+            vehicleType = "家庭用餐场景"
+        )
+    }
+
+    // 生成儿童床最佳实践参数
+    private fun generateBestPracticeChildBedParams(standard: String): InputParameters {
+        return InputParameters(
+            productType = selectedProduct,
+            standardSystem = standard,
+            minHeight = 50,
+            maxHeight = 140,
+            minWeight = 0.0,
+            maxWeight = 30.0,
+            ageRange = "0-6岁",
+            vehicleType = "家庭卧室"
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -190,6 +331,27 @@ fun HomeScreen(
                 }
             )
 
+            // 快捷操作按钮组
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // 一键输出设计建议按钮
+                Button(
+                    onClick = { onQuickDesignSuggestion() },
+                    modifier = Modifier.weight(1f),
+                    enabled = !isGenerating && !showResultCard,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary
+                    )
+                ) {
+                    Text("一键输出设计建议")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // 输入参数表单
             InputParametersForm(
                 standard = selectedStandard,
@@ -214,6 +376,13 @@ fun HomeScreen(
             if (showResultCard && designResult != null && !isGenerating) {
                 ResultCard(
                     result = designResult!!,
+                    isQuickSuggestion = isQuickSuggestionMode,
+                    onSwitchToCustom = if (isQuickSuggestionMode) {
+                        {
+                            showResultCard = false
+                            // 用户可以继续使用自定义参数
+                        }
+                    } else null,
                     onClose = { showResultCard = false }
                 )
             }
@@ -420,12 +589,18 @@ fun LoadingCard() {
 @Composable
 fun ResultCard(
     result: DesignResult,
-    onClose: () -> Unit
+    isQuickSuggestion: Boolean = false,
+    onClose: () -> Unit,
+    onSwitchToCustom: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = if (isQuickSuggestion) {
+                MaterialTheme.colorScheme.tertiaryContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -441,15 +616,63 @@ fun ResultCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "📦 ${result.productName}设计方案",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "📦 ${result.productName}设计方案",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    // 设计建议模式标识
+                    if (isQuickSuggestion) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondary,
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            Text(
+                                text = "✨ 最佳实践设计建议",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
                 IconButton(onClick = onClose) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "关闭"
+                    )
+                }
+            }
+
+            // 适用标准标签（醒目蓝色）
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "【适用标准】",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Text(
+                        text = result.standardName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                    )
+                    Text(
+                        text = result.applicableStandards.standardCode,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -576,6 +799,47 @@ fun ResultCard(
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary
                         )
+                    }
+                }
+            }
+
+            // 设计建议模式提示
+            if (isQuickSuggestion) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "💡 最佳实践参数",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Text(
+                            text = "此方案基于标准推荐的最佳实践参数生成，适合快速了解设计要求。如需针对特定参数进行设计，请使用"自定义参数"模式。",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        // 切换到自定义参数按钮
+                        if (onSwitchToCustom != null) {
+                            Button(
+                                onClick = onSwitchToCustom,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.secondary,
+                                    contentColor = MaterialTheme.colorScheme.onSecondary
+                                )
+                            ) {
+                                Text("切换到自定义参数")
+                            }
+                        }
                     }
                 }
             }
