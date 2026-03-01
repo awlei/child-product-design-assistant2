@@ -125,6 +125,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
+    // Material Icons Extended (for Calculate, MenuBook, History, Visibility, ContentCopy icons)
+    implementation("androidx.compose.material:material-icons-extended")
+
     // Material Design 3 (for XML themes)
     implementation("com.google.android.material:material:1.11.0")
 
