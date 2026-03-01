@@ -89,9 +89,16 @@ android {
         jvmTarget = "17"
     }
 
-    // 禁用 KAPT 任务生成
+    // 禁用 KAPT 任务生成（方法1：通过任务类型）
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KaptTask>().configureEach {
         enabled = false
+    }
+
+    // 禁用 KAPT 任务生成（方法2：通过任务名称，更强制）
+    afterEvaluate {
+        tasks.matching { it.name.contains("kapt", ignoreCase = true) }.configureEach {
+            enabled = false
+        }
     }
 
     buildFeatures {
