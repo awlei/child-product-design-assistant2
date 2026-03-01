@@ -4,6 +4,7 @@ package com.design.assistant.model
  * 产品类型枚举（关联所属品类）
  * 新增产品 → 加枚举项 + 指定品类即可
  */
+
 enum class ProductType(val typeName: String, val category: ProductCategory) {
     // 出行类
     CHILD_SEAT("儿童安全座椅", ProductCategory.TRAVEL),
