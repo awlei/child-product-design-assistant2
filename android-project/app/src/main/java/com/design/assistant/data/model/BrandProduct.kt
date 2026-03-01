@@ -1,5 +1,6 @@
 package com.design.assistant.data.model
 
+import com.design.assistant.model.ProductType
 import com.google.gson.annotations.SerializedName
 
 /**

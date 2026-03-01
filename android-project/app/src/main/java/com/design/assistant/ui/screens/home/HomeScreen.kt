@@ -2,10 +2,14 @@ package com.design.assistant.ui.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -254,7 +258,7 @@ fun HomeScreen(
     }
 
     // 生成儿童安全座椅最佳实践参数
-    private fun generateBestPracticeChildSeatParams(standard: String): InputParameters {
+    fun generateBestPracticeChildSeatParams(standard: String): InputParameters {
         return when {
             standard.contains("ECE R129") -> {
                 // ECE R129 推荐使用最常用的 Q1 组（9-18个月）
@@ -302,7 +306,7 @@ fun HomeScreen(
     }
 
     // 生成婴儿推车最佳实践参数
-    private fun generateBestPracticeBabyStrollerParams(standard: String): InputParameters {
+    fun generateBestPracticeBabyStrollerParams(standard: String): InputParameters {
         return when {
             standard.contains("EN 1888") || standard.contains("GB 14748") -> {
                 InputParameters(
@@ -332,7 +336,7 @@ fun HomeScreen(
     }
 
     // 生成儿童高脚椅最佳实践参数
-    private fun generateBestPracticeHighChairParams(standard: String): InputParameters {
+    fun generateBestPracticeHighChairParams(standard: String): InputParameters {
         return InputParameters(
             productType = selectedProduct,
             standardSystem = standard,
@@ -347,7 +351,7 @@ fun HomeScreen(
     }
 
     // 生成儿童床最佳实践参数
-    private fun generateBestPracticeChildBedParams(standard: String): InputParameters {
+    fun generateBestPracticeChildBedParams(standard: String): InputParameters {
         return InputParameters(
             productType = selectedProduct,
             standardSystem = standard,
@@ -989,7 +993,7 @@ fun ResultCard(
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
-                            text = "此方案基于标准推荐的最佳实践参数生成，适合快速了解设计要求。如需针对特定参数进行设计，请使用"自定义参数"模式。",
+                            text = "此方案基于标准推荐的最佳实践参数生成，适合快速了解设计要求。如需针对特定参数进行设计，请使用\"自定义参数\"模式。",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
