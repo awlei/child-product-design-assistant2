@@ -70,12 +70,12 @@ interface DuckDuckGoApiService {
      * @param q 查询词
      * @return 搜索结果
      */
-    @ retrofit2.http.GET("/")
+    @retrofit2.http.GET("/")
     suspend fun searchInstantAnswer(
-        @ retrofit2.http.Query("q") q: String,
-        @ retrofit2.http.Query("format") format: String = "json",
-        @ retrofit2.http.Query("no_html") noHtml: Int = 1,
-        @ retrofit2.http.Query("skip_disambig") skipDisambig: Int = 1
+        @retrofit2.http.Query("q") q: String,
+        @retrofit2.http.Query("format") format: String = "json",
+        @retrofit2.http.Query("no_html") noHtml: Int = 1,
+        @retrofit2.http.Query("skip_disambig") skipDisambig: Int = 1
     ): DuckDuckGoResponse
 }
 
@@ -151,14 +151,14 @@ interface WikipediaApiService {
      * @param limit 结果数量
      * @return 搜索结果
      */
-    @ retrofit2.http.GET("w/api.php")
+    @retrofit2.http.GET("w/api.php")
     suspend fun searchWikipedia(
-        @ retrofit2.http.Query("action") action: String = "query",
-        @ retrofit2.http.Query("list") list: String = "search",
-        @ retrofit2.http.Query("srsearch") srsearch: String,
-        @ retrofit2.http.Query("srlimit") srlimit: Int = 10,
-        @ retrofit2.http.Query("format") format: String = "json",
-        @ retrofit2.http.Query("utf8") utf8: Int = 1
+        @retrofit2.http.Query("action") action: String = "query",
+        @retrofit2.http.Query("list") list: String = "search",
+        @retrofit2.http.Query("srsearch") srsearch: String,
+        @retrofit2.http.Query("srlimit") srlimit: Int = 10,
+        @retrofit2.http.Query("format") format: String = "json",
+        @retrofit2.http.Query("utf8") utf8: Int = 1
     ): WikipediaSearchResponse
 
     /**
@@ -166,16 +166,16 @@ interface WikipediaApiService {
      * @param pageId 页面 ID
      * @return 页面详情
      */
-    @ retrofit2.http.GET("w/api.php")
+    @retrofit2.http.GET("w/api.php")
     suspend fun getPageDetails(
-        @ retrofit2.http.Query("action") action: String = "query",
-        @ retrofit2.http.Query("prop") prop: String = "extracts|pageimages",
-        @ retrofit2.http.Query("pageids") pageids: String,
-        @ retrofit2.http.Query("exintro") exintro: Int = 1,
-        @ retrofit2.http.Query("explaintext") explaintext: Int = 1,
-        @ retrofit2.http.Query("piprop") piprop: String = "original",
-        @ retrofit2.http.Query("format") format: String = "json",
-        @ retrofit2.http.Query("utf8") utf8: Int = 1
+        @retrofit2.http.Query("action") action: String = "query",
+        @retrofit2.http.Query("prop") prop: String = "extracts|pageimages",
+        @retrofit2.http.Query("pageids") pageids: String,
+        @retrofit2.http.Query("exintro") exintro: Int = 1,
+        @retrofit2.http.Query("explaintext") explaintext: Int = 1,
+        @retrofit2.http.Query("piprop") piprop: String = "original",
+        @retrofit2.http.Query("format") format: String = "json",
+        @retrofit2.http.Query("utf8") utf8: Int = 1
     ): WikipediaPageResponse
 }
 
